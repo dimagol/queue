@@ -204,6 +204,60 @@ src/Configuration/GlobalConfig.cpp.s:
 	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/GlobalConfig.cpp.s
 .PHONY : src/Configuration/GlobalConfig.cpp.s
 
+src/Configuration/dictionary.o: src/Configuration/dictionary.cpp.o
+
+.PHONY : src/Configuration/dictionary.o
+
+# target to build an object file
+src/Configuration/dictionary.cpp.o:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/dictionary.cpp.o
+.PHONY : src/Configuration/dictionary.cpp.o
+
+src/Configuration/dictionary.i: src/Configuration/dictionary.cpp.i
+
+.PHONY : src/Configuration/dictionary.i
+
+# target to preprocess a source file
+src/Configuration/dictionary.cpp.i:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/dictionary.cpp.i
+.PHONY : src/Configuration/dictionary.cpp.i
+
+src/Configuration/dictionary.s: src/Configuration/dictionary.cpp.s
+
+.PHONY : src/Configuration/dictionary.s
+
+# target to generate assembly for a file
+src/Configuration/dictionary.cpp.s:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/dictionary.cpp.s
+.PHONY : src/Configuration/dictionary.cpp.s
+
+src/Configuration/iniparser.o: src/Configuration/iniparser.cpp.o
+
+.PHONY : src/Configuration/iniparser.o
+
+# target to build an object file
+src/Configuration/iniparser.cpp.o:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/iniparser.cpp.o
+.PHONY : src/Configuration/iniparser.cpp.o
+
+src/Configuration/iniparser.i: src/Configuration/iniparser.cpp.i
+
+.PHONY : src/Configuration/iniparser.i
+
+# target to preprocess a source file
+src/Configuration/iniparser.cpp.i:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/iniparser.cpp.i
+.PHONY : src/Configuration/iniparser.cpp.i
+
+src/Configuration/iniparser.s: src/Configuration/iniparser.cpp.s
+
+.PHONY : src/Configuration/iniparser.s
+
+# target to generate assembly for a file
+src/Configuration/iniparser.cpp.s:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Configuration/iniparser.cpp.s
+.PHONY : src/Configuration/iniparser.cpp.s
+
 src/DefinedMessages.o: src/DefinedMessages.cpp.o
 
 .PHONY : src/DefinedMessages.o
@@ -230,6 +284,60 @@ src/DefinedMessages.s: src/DefinedMessages.cpp.s
 src/DefinedMessages.cpp.s:
 	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/DefinedMessages.cpp.s
 .PHONY : src/DefinedMessages.cpp.s
+
+src/Server/TcpConnection.o: src/Server/TcpConnection.cpp.o
+
+.PHONY : src/Server/TcpConnection.o
+
+# target to build an object file
+src/Server/TcpConnection.cpp.o:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/TcpConnection.cpp.o
+.PHONY : src/Server/TcpConnection.cpp.o
+
+src/Server/TcpConnection.i: src/Server/TcpConnection.cpp.i
+
+.PHONY : src/Server/TcpConnection.i
+
+# target to preprocess a source file
+src/Server/TcpConnection.cpp.i:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/TcpConnection.cpp.i
+.PHONY : src/Server/TcpConnection.cpp.i
+
+src/Server/TcpConnection.s: src/Server/TcpConnection.cpp.s
+
+.PHONY : src/Server/TcpConnection.s
+
+# target to generate assembly for a file
+src/Server/TcpConnection.cpp.s:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/TcpConnection.cpp.s
+.PHONY : src/Server/TcpConnection.cpp.s
+
+src/Server/server.o: src/Server/server.cpp.o
+
+.PHONY : src/Server/server.o
+
+# target to build an object file
+src/Server/server.cpp.o:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/server.cpp.o
+.PHONY : src/Server/server.cpp.o
+
+src/Server/server.i: src/Server/server.cpp.i
+
+.PHONY : src/Server/server.i
+
+# target to preprocess a source file
+src/Server/server.cpp.i:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/server.cpp.i
+.PHONY : src/Server/server.cpp.i
+
+src/Server/server.s: src/Server/server.cpp.s
+
+.PHONY : src/Server/server.s
+
+# target to generate assembly for a file
+src/Server/server.cpp.s:
+	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/Server/server.cpp.s
+.PHONY : src/Server/server.cpp.s
 
 src/main.o: src/main.cpp.o
 
@@ -258,33 +366,6 @@ src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/server.o: src/server.cpp.o
-
-.PHONY : src/server.o
-
-# target to build an object file
-src/server.cpp.o:
-	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/server.cpp.o
-.PHONY : src/server.cpp.o
-
-src/server.i: src/server.cpp.i
-
-.PHONY : src/server.i
-
-# target to preprocess a source file
-src/server.cpp.i:
-	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/server.cpp.i
-.PHONY : src/server.cpp.i
-
-src/server.s: src/server.cpp.s
-
-.PHONY : src/server.s
-
-# target to generate assembly for a file
-src/server.cpp.s:
-	$(MAKE) -f CMakeFiles/tcp_shmafka.dir/build.make CMakeFiles/tcp_shmafka.dir/src/server.cpp.s
-.PHONY : src/server.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -303,15 +384,24 @@ help:
 	@echo "... src/Configuration/GlobalConfig.o"
 	@echo "... src/Configuration/GlobalConfig.i"
 	@echo "... src/Configuration/GlobalConfig.s"
+	@echo "... src/Configuration/dictionary.o"
+	@echo "... src/Configuration/dictionary.i"
+	@echo "... src/Configuration/dictionary.s"
+	@echo "... src/Configuration/iniparser.o"
+	@echo "... src/Configuration/iniparser.i"
+	@echo "... src/Configuration/iniparser.s"
 	@echo "... src/DefinedMessages.o"
 	@echo "... src/DefinedMessages.i"
 	@echo "... src/DefinedMessages.s"
+	@echo "... src/Server/TcpConnection.o"
+	@echo "... src/Server/TcpConnection.i"
+	@echo "... src/Server/TcpConnection.s"
+	@echo "... src/Server/server.o"
+	@echo "... src/Server/server.i"
+	@echo "... src/Server/server.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/server.o"
-	@echo "... src/server.i"
-	@echo "... src/server.s"
 .PHONY : help
 
 

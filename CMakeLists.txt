@@ -18,22 +18,28 @@ if(Boost_FOUND)
 endif()
 
 set(SOURCE_FILES src/main.cpp
-        src/server.h
-        src/server.cpp
+        src/Server/server.h
+        src/Server/server.cpp
         src/DefinedMessages.cpp
         src/DefinedMessages.h
         src/BufferPool.h
         src/BufferPool.cpp
         src/ConcurentQueue.h
+        src/Configuration/dictionary.h
+        src/Configuration/dictionary.cpp
+        src/Configuration/iniparser.h
+        src/Configuration/iniparser.cpp
         src/Configuration/Config.h
         src/Configuration/Config.cpp
         src/Configuration/GlobalConfig.cpp
-        src/Configuration/GlobalConfig.h)
+        src/Configuration/GlobalConfig.h
+        src/Server/TcpConnection.cpp src/Server/TcpConnection.h)
 
 if(Boost_FOUND)
-
     include_directories(/usr/include/boost/asio/ip/)
-    include_directories(external_libs/iniparser/src)
 endif()
+#here
+#link_directories(src/Configuration)
+#add_subdirectory(src/Configuration)
 add_executable(tcp_shmafka ${SOURCE_FILES})
 target_link_libraries(tcp_shmafka ${Boost_LIBRARIES})

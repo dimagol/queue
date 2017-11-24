@@ -4,16 +4,16 @@
 
 #include "GlobalConfig.h"
 
-GlobalConfig::conf = nullptr;
-GlobalConfig::lock;
+Config *GlobalConfig::conf = nullptr;
+mutex *GlobalConfig::lock  = new mutex();
 
 Config* GlobalConfig::getGlobalConfig() {
     if(conf == nullptr){
-        lock.lock();
+        lock->lock();
         if(conf == nullptr){
             conf = new Config("shmafka.ini");
         }
-        lock.unlock();
+        lock->unlock();
 
     }
     return conf;

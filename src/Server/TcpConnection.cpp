@@ -1,22 +1,32 @@
 //
-// Created by dima on 13/10/17.
+// Created by dima on 24/11/17.
 //
 
-#include "server.h"
-//typedef boost::shared_ptr<tcp_connection> pointer;
-uint32_t tcp_connection::client_id = 0;
+#include "TcpConnection.h"
 
-tcp_connection::tcp_connection(boost::asio::io_service& io_service, ServerHandler *serverHandler)
+#include "server.h"
+// Created by dima on 13/10/17.
+
+uint32_t TcpConnection::client_id = 0;
+
+TcpConnection::TcpConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler)
         : socket_(io_service),serverHandler(serverHandler){
     in = BufferPool::bufferPool->get();
     id = client_id++;
 }
 
 
-void tcp_connection::start() {
+void TcpConnection::set_no_deley(){
+    boost::asio::ip::tcp::no_delay option(true);
+    socket_.set_option(option);
+}
+
+
+// send the welcome message
+void TcpConnection::start() {
     boost::asio::async_write(socket_,
                              boost::asio::buffer(DefinedMessages::hello_msg->buff, DefinedMessages::hello_msg->len),
-                             boost::bind(&tcp_connection::handle_write_first,
+                             boost::bind(&TcpConnection::handle_write_first,
                                          shared_from_this(),
                                          boost::asio::placeholders::error,
                                          boost::asio::placeholders::bytes_transferred));
@@ -24,8 +34,9 @@ void tcp_connection::start() {
 
     serverHandler->register_client(shared_from_this(),id);
 }
-void tcp_connection::handle_write_first(const boost::system::error_code &errorCode,
-                                        size_t size) {
+
+void TcpConnection::handle_write_first(const boost::system::error_code &errorCode,
+                                       size_t size) {
     if (errorCode){
         cerr << "got to big msg or error" << endl;
         serverHandler->deregister_client(id);
@@ -33,14 +44,13 @@ void tcp_connection::handle_write_first(const boost::system::error_code &errorCo
     }
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in->buff, 4),
-                            boost::bind(&tcp_connection::handle_read_first,
+                            boost::bind(&TcpConnection::handle_read_first,
                                         shared_from_this(),
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::bytes_transferred));
 }
-
-void tcp_connection::handle_read_first(const boost::system::error_code &errorCode /*error*/,
-                                       size_t size /*bytes_transferred*/){
+void TcpConnection::handle_read_first(const boost::system::error_code &errorCode /*error*/,
+                                      size_t size /*bytes_transferred*/){
     cout << errorCode << endl;
 
     len_in = ntohl(*((uint32_t *)in->buff));
@@ -51,12 +61,13 @@ void tcp_connection::handle_read_first(const boost::system::error_code &errorCod
     }
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in->buff, len_in),
-                            boost::bind(&tcp_connection::handle_read_all,shared_from_this() ,
+                            boost::bind(&TcpConnection::handle_read_all,shared_from_this() ,
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::bytes_transferred));
 }
-void tcp_connection::handle_read_all(const boost::system::error_code & errorCode/*error*/,
-                     size_t /*bytes_transferred*/) {
+
+void TcpConnection::handle_read_all(const boost::system::error_code & errorCode/*error*/,
+                                    size_t /*bytes_transferred*/) {
 
     if (errorCode){
         cerr << "got to big msg or error" << endl;
@@ -64,34 +75,23 @@ void tcp_connection::handle_read_all(const boost::system::error_code & errorCode
         return;
     }
 
-//    serverHandler->concurentQueueIn.push(pair<auto ,auto >(id,in));
     in = BufferPool::bufferPool->get();
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in->buff, len_in),
-                            boost::bind(&tcp_connection::handle_read_first, this,
+                            boost::bind(&TcpConnection::handle_read_first, this,
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::bytes_transferred));
 }
 
-
-void tcp_connection::send_data(Buffer *buffer) {
+void TcpConnection::send_data(Buffer *buffer) {
     boost::asio::async_write(socket_,
                              boost::asio::buffer(buffer->buff, buffer->len),
-                             boost::bind(&tcp_connection::handle_write_first,
+                             boost::bind(&TcpConnection::handle_write_first,
                                          this,
                                          boost::asio::placeholders::error,
                                          boost::asio::placeholders::bytes_transferred));
 }
 
-
-
-tcp::socket& tcp_connection::socket() {
+tcp::socket& TcpConnection::socket() {
     return socket_;
-}
-
-
-
-void tcp_connection::set_no_deley(){
-    boost::asio::ip::tcp::no_delay option(true);
-    socket_.set_option(option);
 }

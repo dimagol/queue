@@ -9,11 +9,11 @@
 #include "Config.h"
 #include <mutex>
 
-static class GlobalConfig {
+class GlobalConfig {
 public:
     static Config * getGlobalConfig();
-private:
-    static mutex lock;
+public:
+    static mutex * lock;
     static Config * conf;
 };
 
