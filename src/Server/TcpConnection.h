@@ -6,16 +6,11 @@
 #define TCP_SHMAFKA_TCPCONNECTION_H
 
 #include <boost/asio.hpp>
-#include <ctime>
-#include <iostream>
 #include <string>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <cstdint>
-#include <unordered_set>
-#include <unordered_map>
 #include <boost/enable_shared_from_this.hpp>
-#include <utility>
 
 #include "../DefinedMessages.h"
 #include "../ConcurentQueue.h"
@@ -41,7 +36,7 @@ public:
     void start();
     void set_no_deley();
 
-    void send_data(Buffer * buffer);
+    void send_data(SocketProtoBuffer * buffer);
 private:
     explicit TcpConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler);
     void handle_write_first(const boost::system::error_code & /*error*/,
@@ -53,9 +48,9 @@ private:
 
 
     ServerHandler * serverHandler;
-    uint32_t len_in;
     tcp::socket socket_;
-    Buffer * in;
+    uint32_t len_in;
+    SocketProtoBuffer * in;
     uint32_t id;
 };
 

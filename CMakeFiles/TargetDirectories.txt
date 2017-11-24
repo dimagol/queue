@@ -1,3 +1,0 @@
-/home/dima/CLionProjects/tcp_shmafka/CMakeFiles/rebuild_cache.dir
-/home/dima/CLionProjects/tcp_shmafka/CMakeFiles/edit_cache.dir
-/home/dima/CLionProjects/tcp_shmafka/CMakeFiles/tcp_shmafka.dir

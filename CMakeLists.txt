@@ -22,8 +22,8 @@ set(SOURCE_FILES src/main.cpp
         src/Server/server.cpp
         src/DefinedMessages.cpp
         src/DefinedMessages.h
-        src/BufferPool.h
-        src/BufferPool.cpp
+        src/Buff/BufferPool.h
+        src/Buff/BufferPool.cpp
         src/ConcurentQueue.h
         src/Configuration/dictionary.h
         src/Configuration/dictionary.cpp
@@ -33,13 +33,12 @@ set(SOURCE_FILES src/main.cpp
         src/Configuration/Config.cpp
         src/Configuration/GlobalConfig.cpp
         src/Configuration/GlobalConfig.h
-        src/Server/TcpConnection.cpp src/Server/TcpConnection.h)
+        src/Server/TcpConnection.cpp src/Server/TcpConnection.h src/Client/Client.cpp src/Client/Client.h src/Buff/Log.h)
 
 if(Boost_FOUND)
     include_directories(/usr/include/boost/asio/ip/)
 endif()
 #here
-#link_directories(src/Configuration)
-#add_subdirectory(src/Configuration)
+set(CMAKE_CXX_FLAGS " -pthread")
 add_executable(tcp_shmafka ${SOURCE_FILES})
 target_link_libraries(tcp_shmafka ${Boost_LIBRARIES})

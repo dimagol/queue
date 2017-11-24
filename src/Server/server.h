@@ -5,7 +5,6 @@
 #ifndef TCP_SHMAFKA_SERVER_H
 #define TCP_SHMAFKA_SERVER_H
 #include <boost/asio.hpp>
-#include <ctime>
 #include <iostream>
 #include <string>
 #include <boost/bind.hpp>
@@ -24,40 +23,6 @@
 using namespace boost::asio::ip;
 using namespace std;
 
-//
-//class ServerHandler;
-//class TcpConnection :
-//        public boost::enable_shared_from_this<TcpConnection>
-//{
-//
-//public:
-//    typedef boost::shared_ptr<TcpConnection> pointer;
-//    static pointer create(boost::asio::io_service& io_service, ServerHandler *serverHandler)
-//    {
-//        return pointer(new TcpConnection(io_service,serverHandler ));
-//    }
-//    static uint32_t client_id;
-//    tcp::socket& socket();
-//    void start();
-//    void set_no_deley();
-//
-//    void send_data(Buffer * buffer);
-//private:
-//    explicit TcpConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler);
-//    void handle_write_first(const boost::system::error_code & /*error*/,
-//                            size_t /*bytes_transferred*/);
-//    void handle_read_first(const boost::system::error_code & /*error*/,
-//                           size_t /*bytes_transferred*/);
-//    void handle_read_all(const boost::system::error_code & /*error*/,
-//                           size_t /*bytes_transferred*/);
-//
-//
-//    ServerHandler * serverHandler;
-//    uint32_t len_in;
-//    tcp::socket socket_;
-//    Buffer * in;
-//    uint32_t id;
-//};
 
 
 class ServerHandler{
@@ -74,39 +39,42 @@ public:
         }
     }
 
-    ConcurentQueue< pair<uint32_t ,Buffer*> *> concurentQueueIn;
-    ConcurentQueue< pair<uint32_t ,Buffer*> *> concurentQueueOut;
+    ConcurentQueue< pair<uint32_t ,SocketProtoBuffer*> *> concurentQueueIn;
+    ConcurentQueue< pair<uint32_t ,SocketProtoBuffer*> *> concurentQueueToClient;
 };
 
-class tcp_server
+class TcpServer
 {
 public:
-    explicit tcp_server(boost::asio::io_service& io_service)
+    explicit TcpServer(boost::asio::io_service& io_service)
             : acceptor_(io_service, tcp::endpoint(tcp::v4(), 8081))
     {
         start_accept();
     }
 
     void run(){
-        acceptor_.get_io_service().poll();
-        auto msg = serverHandler.concurentQueueOut.try_pop();
-        while (msg!= nullptr) {
-            auto tcp_con = serverHandler.client_map[msg->first];
-            if (tcp_con != nullptr) {
+        while (shouldRun) {
+            acceptor_.get_io_service().poll();
+            auto msg = serverHandler.concurentQueueToClient.try_pop();
+            if (msg!= nullptr) {
+                auto tcp_con = serverHandler.client_map[msg->first];
                 ((TcpConnection::pointer) tcp_con)->send_data(msg->second);
             }
-            msg = serverHandler.concurentQueueOut.try_pop();
         }
     }
 
-public:
-    ServerHandler serverHandler;
+    void setShouldRun(volatile bool shouldRun) {
+        TcpServer::shouldRun = shouldRun;
+    }
+
+private:
+
     void start_accept()
     {
         TcpConnection::pointer new_connection =  TcpConnection::create(acceptor_.get_io_service(), &this->serverHandler);
 
         acceptor_.async_accept(new_connection->socket(),
-                               boost::bind(&tcp_server::handle_accept, this, new_connection, boost::asio::placeholders::error));
+                               boost::bind(&TcpServer::handle_accept, this, new_connection, boost::asio::placeholders::error));
     }
 
     void handle_accept(TcpConnection::pointer  new_connection,
@@ -120,9 +88,12 @@ public:
         }
     }
 
-    tcp::acceptor acceptor_;
 
-public:
+
+private:
+    tcp::acceptor acceptor_;
+    volatile bool shouldRun = true;
+    ServerHandler serverHandler;
 
 };
 

@@ -213,7 +213,7 @@ void iniparser_dump_ini(dictionary * d, FILE * f)
 
     nsec = iniparser_getnsec(d);
     if (nsec<1) {
-        /* No section in file: dump all keys as they are */
+        /* No section in_buff file: dump all keys as they are */
         for (i=0 ; i<d->size ; i++) {
             if (d->key[i]==NULL)
                 continue ;
@@ -668,7 +668,7 @@ dictionary * iniparser_load(const char * ininame)
         /* Safety check against buffer overflows */
         if (line[len]!='\n') {
             fprintf(stderr,
-                    "iniparser: input line too long in %s (%d)\n",
+                    "iniparser: input line too long in_buff %s (%d)\n",
                     ininame,
                     lineno);
             dictionary_del(dict);
@@ -704,7 +704,7 @@ dictionary * iniparser_load(const char * ininame)
             break ;
 
             case LINE_ERROR:
-            fprintf(stderr, "iniparser: syntax error in %s (%d):\n",
+            fprintf(stderr, "iniparser: syntax error in_buff %s (%d):\n",
                     ininame,
                     lineno);
             fprintf(stderr, "-> %s\n", line);

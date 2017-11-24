@@ -6,11 +6,11 @@
 #define TCP_SHMAFKA_DEFINEDMESSAGES_H
 
 
-#include "BufferPool.h"
+#include "Buff/BufferPool.h"
 
 class DefinedMessages {
 public:
-    static Buffer * hello_msg;
+    static SocketProtoBuffer * hello_msg;
 };
 
 

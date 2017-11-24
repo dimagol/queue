@@ -227,7 +227,7 @@ int dictionary_set(dictionary * d, const char * key, const char * val)
     
     /* Compute hash for this key */
     hash = dictionary_hash(key) ;
-    /* Find if value is already in dictionary */
+    /* Find if value is already in_buff dictionary */
     if (d->n>0) {
         for (i=0 ; i<d->size ; i++) {
             if (d->key[i]==NULL)
@@ -260,7 +260,7 @@ int dictionary_set(dictionary * d, const char * key, const char * val)
         d->size *= 2 ;
     }
 
-    /* Insert key in the first empty slot. Start at d->n and wrap at
+    /* Insert key in_buff the first empty slot. Start at d->n and wrap at
        d->size. Because d->n < d->size this will necessarily
        terminate. */
     for (i=d->n ; d->key[i] ; ) {
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
     printf("allocating...\n");
     d = dictionary_new(0);
     
-    /* Set values in dictionary */
+    /* Set values in_buff dictionary */
     printf("setting %d values...\n", NVALS);
     for (i=0 ; i<NVALS ; i++) {
         sprintf(cval, "%04d", i);
