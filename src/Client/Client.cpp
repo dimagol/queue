@@ -27,23 +27,25 @@ Client::Client(boost::asio::io_service &io_service, string &host, string &port)
 void Client::handle_connect(const boost::system::error_code &error) {
     if (!error)
     {
+        set_no_deley();
         boost::asio::async_read(socket_,
-                                boost::asio::buffer(in_buff->msg_data_buff, DefinedMessages::hello_msg->len),
+                                boost::asio::buffer(in_buff->all_data, DefinedMessages::hello_msg->get_msg_all_data_len()),
                                 boost::bind(&Client::handle_read_hello, this,
                                             boost::asio::placeholders::error));
     }
 }
 
-//validate connect msg and start negotiation
+//validate connect msg and send_server_welcome negotiation
 void Client::handle_read_hello(const boost::system::error_code &error) {
+//    cout << "Client::handle_read_hello" << endl;
     if (error != nullptr)
     {
         cerr << "got error" << error << endl;
         do_close();
         return;
     }
-    if( in_buff->get_msg_len()!= DefinedMessages::hello_msg->len){
-        cerr << "bad welcome message len" << endl;
+    if( in_buff->get_msg_len() != DefinedMessages::hello_msg->get_msg_len()){
+        cerr << "bad welcome message len" <<DefinedMessages::hello_msg->get_msg_len() << " " << in_buff->get_msg_len() << endl;
         return;
     }
 
@@ -62,6 +64,7 @@ void Client::handle_read_hello(const boost::system::error_code &error) {
 }
 
 void Client::handle_read_len(const boost::system::error_code &error) {
+//    cout << "Client::handle_read_len\n";
     uint32_t len  = in_buff->get_msg_len();
     if(len > in_buff->len){
         cerr << "bad len " <<  in_buff->get_msg_len() << endl;
@@ -99,9 +102,11 @@ void Client::handle_body(const boost::system::error_code &error) {
 }
 
 void Client::write(SocketProtoBuffer *buffer) {
+    auto  b = buffer->get_msg_len();
+//    cout << "Client::write\n";
     boost::asio::async_write(socket_,
                              boost::asio::buffer(buffer->all_data,
-                                                 buffer->get_msg_len()),
+                                                 buffer->get_msg_all_data_len()),
                              boost::bind(&Client::handle_write,
                                          this,
                                          buffer,
@@ -109,6 +114,8 @@ void Client::write(SocketProtoBuffer *buffer) {
 }
 
 void Client::handle_write(SocketProtoBuffer *out_buff, const boost::system::error_code &error) {
+//    cout << "Client::handle_write\n";
+
     BufferPool::bufferPool->release(out_buff);
     if(error != nullptr){
         cerr << "got error " << error << endl;
@@ -117,4 +124,13 @@ void Client::handle_write(SocketProtoBuffer *out_buff, const boost::system::erro
 
 void Client::setShouldRun(volatile bool shouldRun) {
     Client::shouldRun = shouldRun;
+}
+
+void Client::set_no_deley() {
+    boost::asio::ip::tcp::no_delay option(true);
+    socket_.set_option(option);
+}
+
+std::thread Client::spawn() {
+    return std::thread(&Client::run, this);
 }

@@ -32,14 +32,16 @@ class Client
 {
 public:
     Client(boost::asio::io_service& io_service, string &host, string &port);
-
-
-
+    std::thread spawn();
     void setShouldRun(volatile bool shouldRun);
 
     void run(){
         while (shouldRun){
-            write(concurentQueueToServer.pop());
+            io_service_.poll();
+            SocketProtoBuffer * buff = concurentQueueToServer.try_pop();
+            if(buff != nullptr){
+                write(buff);
+            }
         }
         close();
     }
@@ -65,6 +67,8 @@ private:
     void write(SocketProtoBuffer * buffer);
 
     void handle_write(SocketProtoBuffer * out_buff, const boost::system::error_code &error);
+
+    void set_no_deley();
 
     void do_close() {
         socket_.close();

@@ -18,8 +18,8 @@ if(Boost_FOUND)
 endif()
 
 set(SOURCE_FILES src/main.cpp
-        src/Server/server.h
-        src/Server/server.cpp
+        src/Server/TcpServer.h
+        src/Server/TcpServer.cpp
         src/DefinedMessages.cpp
         src/DefinedMessages.h
         src/Buff/BufferPool.h
@@ -33,7 +33,7 @@ set(SOURCE_FILES src/main.cpp
         src/Configuration/Config.cpp
         src/Configuration/GlobalConfig.cpp
         src/Configuration/GlobalConfig.h
-        src/Server/TcpConnection.cpp src/Server/TcpConnection.h src/Client/Client.cpp src/Client/Client.h src/Buff/Log.h)
+        src/Server/TcpServerConnection.cpp src/Server/TcpServerConnection.h src/Client/Client.cpp src/Client/Client.h src/Buff/Log.h)
 
 if(Boost_FOUND)
     include_directories(/usr/include/boost/asio/ip/)

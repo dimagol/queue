@@ -1,0 +1,7 @@
+.gitignore.swp
+.idea/
+CMakeFiles/
+cmake-build-debug/
+tcp_shmafka
+tcp_shmafka.cbp
+
