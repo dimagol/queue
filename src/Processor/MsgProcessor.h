@@ -37,30 +37,27 @@ private:
                             buff,
                             buff->get_int(CONSTS_POST_MSG_CHUNK_OFFSET),
                             buff->get_int(CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET),
-                            incomeMessage.getId(),
-                            incomeMessage.getTcpServerConnectionPointer());
+                            incomeMessage.getId());
 
     }
     ProceededMsg handleRegister(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
         return ProceededMsg(buff->get_string(CONSTS_REGISTER_CHANEL_OFFSET),
                             MsgType::REGISTER,
-                            incomeMessage.getId(),
-                            incomeMessage.getTcpServerConnectionPointer());
+                            incomeMessage.getId());
     }
     ProceededMsg handleDeregister(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
         return ProceededMsg(buff->get_string(CONSTS_DEREGISTER_CHANEL_OFFSET),
                             MsgType::DEREGISTER,
-                            incomeMessage.getId(),
-                            incomeMessage.getTcpServerConnectionPointer());
+                            incomeMessage.getId());
     }
     ProceededMsg handleDisconnect(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededMsg(MsgType::DISCONNECT, incomeMessage.getId(), incomeMessage.getTcpServerConnectionPointer());
+        return ProceededMsg(MsgType::DISCONNECT, incomeMessage.getId());
     }
 
     ProceededMsg handleListChanels(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededMsg(MsgType::LIST_CHANELES, incomeMessage.getId(), incomeMessage.getTcpServerConnectionPointer());
+        return ProceededMsg(MsgType::LIST_CHANELES, incomeMessage.getId());
     }
 };
 

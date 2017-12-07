@@ -73,6 +73,18 @@ int testServer(){
 
 
 int main() {
-    testLog();
+    shared_ptr<pair<int,int >> p = make_shared<pair<int,int >> (make_pair<int,int>(1,1));
+    if(p == nullptr){
+        cout << 1 << endl;
+    } else{
+        cout << 2 << endl;
+    }
+    unordered_set<int> set;
+    set.insert(1);
+    set.insert(2);
+    set.insert(3);
+    for(auto val : set){
+        cout << " aaa "<<val << endl;
+    }
     return 0;
 }

@@ -151,10 +151,28 @@ static TSLogger globalLogger;
            globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::ERROR,__FILE__,__LINE__);\
     }
 
+#define LOG_WARN(...)\
+    if (globalLogger.logSev <= TSLogger::Severity::WARN){\
+           std::string str1112 = strBuilder(__VA_ARGS__); \
+           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::WARN,__FILE__,__LINE__);\
+    }
+
 #define LOG_INFO(...)\
     if (globalLogger.logSev <= TSLogger::Severity::INFO){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
            globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::INFO,__FILE__,__LINE__);\
+    }
+
+#define LOG_DEBUG(...)\
+    if (globalLogger.logSev <= TSLogger::Severity::DEBUG){\
+           std::string str1112 = strBuilder(__VA_ARGS__); \
+           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::DEBUG,__FILE__,__LINE__);\
+    }
+
+#define LOG_TRACE(...)\
+    if (globalLogger.logSev <= TSLogger::Severity::TRACE){\
+           std::string str1112 = strBuilder(__VA_ARGS__); \
+           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::TRACE,__FILE__,__LINE__);\
     }
 
 #endif //TCP_SHMAFKA_LOGGER_H

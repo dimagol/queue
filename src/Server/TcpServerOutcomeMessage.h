@@ -7,7 +7,7 @@
 
 
 #include <cstdint>
-#include <bits/unordered_set.h>
+#include <unordered_set>
 #include "../Buff/BufferPool.h"
 using namespace std;
 class TcpServerOutcomeMessage {
@@ -15,6 +15,14 @@ class TcpServerOutcomeMessage {
 private:
     SocketProtoBuffer * buffer;
     const unordered_set<uint32_t> sendToSet;
+public:
+    SocketProtoBuffer *getBuffer() const {
+        return buffer;
+    }
+
+    const unordered_set<uint32_t> &getSendToSet() const {
+        return sendToSet;
+    }
 
 
 };

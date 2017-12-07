@@ -1,4 +1,5 @@
 #include "TcpServer.h"
+#include "../Logging/TSLogger.h"
 
 void ServerHandler::register_client(TcpServerConnection::TcpServerConnectionPointer conn, uint32_t id) {
     client_map[id] = std::move(conn);
@@ -17,13 +18,26 @@ TcpServer::TcpServer(boost::asio::io_service &io_service, uint16_t port)
 }
 
 
-TcpServerIncomeMessage TcpServer::recieve() {
+shared_ptr<TcpServerIncomeMessage> TcpServer::recieve() {
     return serverHandler.concurentQueueFromClients.pop();
 }
 
 void TcpServer::run() {
+    LOG_INFO("tcp server start ")
     while (shouldRun) {
         acceptor_.get_io_service().poll();
+        auto outMsg = serverHandler.concurentQueueToClient.try_pop();
+        while (outMsg != nullptr){
+            for (auto id : outMsg->getSendToSet()){
+                auto connPair = serverHandler.client_map.find(id);
+                if(__glibc_likely(connPair != serverHandler.client_map.end())){
+                    connPair->second->send_data(outMsg->getBuffer());
+                } else{
+                    LOG_WARN("cant send data to ",id);
+                }
+            }
+        }
+
     }
 }
 
@@ -45,4 +59,8 @@ void TcpServer::handle_accept(TcpServerConnection::TcpServerConnectionPointer ne
         new_connection->send_server_welcome();
         start_accept();
     }
+}
+
+void TcpServer::send(const shared_ptr<TcpServerOutcomeMessage> &outMsg) {
+    serverHandler.concurentQueueToClient.push(outMsg);
 }

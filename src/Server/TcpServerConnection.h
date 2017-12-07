@@ -14,6 +14,7 @@
 
 #include "../DefinedMessages.h"
 #include "../ConcurentQueue.h"
+#include "TcpServerOutcomeMessage.h"
 
 
 using namespace boost::asio::ip;
@@ -33,7 +34,7 @@ public:
     }
 
     tcp::socket& socket();
-    void send_data(SocketProtoBuffer * buffer);
+    void send_data(SocketProtoBuffer *buffer);
     void set_no_delay();
     void send_server_welcome();
 private:

@@ -4,6 +4,7 @@
 
 #include "TcpServerConnection.h"
 #include "TcpServer.h"
+#include "../Logging/TSLogger.h"
 
 uint32_t TcpServerConnection::client_id = 0;
 
@@ -36,8 +37,8 @@ void TcpServerConnection::send_server_welcome() {
 }
 
 void TcpServerConnection::handle_send_welcome_message(const boost::system::error_code &errorCode, size_t size) {
-    if (errorCode != nullptr){
-        cerr << "error" << errorCode << endl;
+    if (__glibc_unlikely(errorCode != nullptr)){
+        LOG_WARN("error:" ,errorCode);
         serverHandler->deregister_client(id);
         return;
     }
@@ -49,14 +50,21 @@ void TcpServerConnection::handle_send_welcome_message(const boost::system::error
                                         boost::asio::placeholders::bytes_transferred));
 }
 void TcpServerConnection::handle_read_len(const boost::system::error_code &errorCode, size_t size){
+    if (__glibc_unlikely(errorCode != nullptr)){
+        LOG_WARN("error:" ,errorCode);
+        serverHandler->deregister_client(id);
+        return;
+    }
 
-    if(size != 4){
-        cerr << "size != 4 \n" ;
+    if(__glibc_unlikely(size != 4)){
+        LOG_WARN("size != 4 ", size) ;
+        serverHandler->deregister_client(id);
+        return;
     }
 
     len_in = in->get_msg_len();
-    if(len_in > in->len || (errorCode != nullptr)){
-        cerr << "got to big msg or error" << endl;
+    if(__glibc_unlikely(len_in > in->len || (errorCode != nullptr))){
+        LOG_WARN("got to big msg or error");
         serverHandler->deregister_client(id);
         return;
     }
@@ -69,12 +77,12 @@ void TcpServerConnection::handle_read_len(const boost::system::error_code &error
 
 void TcpServerConnection::handle_read_data(const boost::system::error_code &errorCode, size_t size) {
 
-    if (errorCode != nullptr){
-        cerr << "got to big msg or error" << endl;
+    if (__glibc_unlikely(errorCode != nullptr)){
+        LOG_WARN("error:" ,errorCode);
         serverHandler->deregister_client(id);
         return;
     }
-    serverHandler->concurentQueueFromClients.push(TcpServerIncomeMessage(in,id));
+    serverHandler->concurentQueueFromClients.push(make_shared<TcpServerIncomeMessage>(in,id));
     in = BufferPool::bufferPool->get();
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in->msg_data_buff, MSG_LEN_BUFF_LEN),
@@ -100,8 +108,8 @@ tcp::socket& TcpServerConnection::socket() {
 
 void TcpServerConnection::handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size) {
     BufferPool::bufferPool->release(buffer);
-    if (errorCode != nullptr){
-        cerr << "handle_send_data error" << endl;
+    if (__glibc_unlikely(errorCode != nullptr)){
+        LOG_WARN("error:" ,errorCode);
         serverHandler->deregister_client(id);
         return;
     }

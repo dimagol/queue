@@ -19,6 +19,7 @@
 #include "../ConcurentQueue.h"
 #include "TcpServerConnection.h"
 #include "TcpServerIncomeMessage.h"
+#include "TcpServerOutcomeMessage.h"
 
 
 using namespace boost::asio::ip;
@@ -34,8 +35,8 @@ public:
     void register_client(TcpServerConnection::TcpServerConnectionPointer conn, uint32_t id);
     void deregister_client(uint32_t id);
 
-    ConcurentQueue<TcpServerIncomeMessage> concurentQueueFromClients;
-    ConcurentQueue<TcpServerIncomeMessage> concurentQueueToClient;
+    ConcurentQueue<shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
+    ConcurentQueue<shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
 };
 
 class TcpServer
@@ -43,8 +44,9 @@ class TcpServer
 public:
     explicit TcpServer(boost::asio::io_service& io_service, uint16_t port);
 
+    void send(const shared_ptr<TcpServerOutcomeMessage> &outMsg);
 
-    TcpServerIncomeMessage recieve();
+    shared_ptr<TcpServerIncomeMessage> recieve();
 
     void run();
 
