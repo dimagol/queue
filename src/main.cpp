@@ -1,15 +1,19 @@
 #include <iostream>
 #include "Server/TcpServer.h"
 #include "Client/Client.h"
+#include "Logging/TSLogger.h"
 
-void printit(const shared_ptr<pair<uint32_t, SocketProtoBuffer *>> &all);
+int testLog()
+{
+    globalLogger.init("log.log", true, TSLogger::WARN);
+    LOG_ERROR("dima ", " dddd")
+}
 
-
-int main() {
+int testServer(){
     try
     {
         boost::asio::io_service io_service_server;
-        TcpServer server(io_service_server);
+        TcpServer server(io_service_server,8081);
         thread tServer(boost::bind(&TcpServer::run, &server));
         sleep(1);
 
@@ -28,36 +32,31 @@ int main() {
         std::string str1("kkkk");
         std::string str2("kkkk11111111");
         std::string str3("kkkk3333333");
-
-        buffer->set_by_str(str1);
-        client.send(buffer);
-        server.recieve()->second->print_buff();
-
-        buffer = BufferPool::bufferPool->get();
-        buffer->set_by_str(str1);
-        client.send(buffer);
-        server.recieve()->second->print_buff();
-
-        buffer = BufferPool::bufferPool->get();
-        buffer->set_by_str(str2);
-        server.send(0,buffer);
-        client.recieve()->print_buff();
-
-        buffer = BufferPool::bufferPool->get();
-        buffer->set_by_str(str1);
-        client.send(buffer);
-        server.recieve()->second->print_buff();
-
-
-        buffer = BufferPool::bufferPool->get();
-        buffer->set_by_str(str3);
-        server.send(0,buffer);
-        client.recieve()->print_buff();
-
-
-
-
-
+//
+//        buffer->set_by_str(str1);
+//        client.send(buffer);
+//        server.recieve()->second->print_buff();
+//
+//        buffer = BufferPool::bufferPool->get();
+//        buffer->set_by_str(str1);
+//        client.send(buffer);
+//        server.recieve()->second->print_buff();
+//
+//        buffer = BufferPool::bufferPool->get();
+//        buffer->set_by_str(str2);
+//        server.send(0,buffer);
+//        client.recieve()->print_buff();
+//
+//        buffer = BufferPool::bufferPool->get();
+//        buffer->set_by_str(str1);
+//        client.send(buffer);
+//        server.recieve()->second->print_buff();
+//
+//
+//        buffer = BufferPool::bufferPool->get();
+//        buffer->set_by_str(str3);
+//        server.send(0,buffer);
+//        client.recieve()->print_buff();
 
 
         sleep(1000);
@@ -72,9 +71,8 @@ int main() {
     return 0;
 }
 
-void printit(const shared_ptr<pair<uint32_t, SocketProtoBuffer *>> &all) {
-//    all->second->print_buff();
-//    cout << all->first << endl;
+
+int main() {
+    testLog();
+    return 0;
 }
-
-

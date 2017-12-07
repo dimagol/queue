@@ -26,10 +26,10 @@ class TcpServerConnection :
 {
 
 public:
-    typedef boost::shared_ptr<TcpServerConnection> pointer;
-    static pointer create(boost::asio::io_service& io_service, ServerHandler *serverHandler)
+    typedef boost::shared_ptr<TcpServerConnection> TcpServerConnectionPointer;
+    static TcpServerConnectionPointer create(boost::asio::io_service& io_service, ServerHandler *serverHandler)
     {
-        return pointer(new TcpServerConnection(io_service,serverHandler ));
+        return TcpServerConnectionPointer(new TcpServerConnection(io_service,serverHandler ));
     }
 
     tcp::socket& socket();

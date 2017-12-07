@@ -74,7 +74,7 @@ void TcpServerConnection::handle_read_data(const boost::system::error_code &erro
         serverHandler->deregister_client(id);
         return;
     }
-    serverHandler->concurentQueueFromClients.push(make_shared<pair<uint32_t ,SocketProtoBuffer*>>(make_pair(id, in)));
+    serverHandler->concurentQueueFromClients.push(TcpServerIncomeMessage(in,id));
     in = BufferPool::bufferPool->get();
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in->msg_data_buff, MSG_LEN_BUFF_LEN),

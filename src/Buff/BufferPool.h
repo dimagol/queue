@@ -18,11 +18,20 @@ using namespace std;
 
 class SocketProtoBuffer{
 public:
-    explicit SocketProtoBuffer(uint32_t len) : len(len) , offset(0){
+    explicit SocketProtoBuffer(uint32_t len) : len(len) , offset(0), nextBuffer(nullptr){
         all_data = new uint8_t[len + MSG_LEN_BUFF_LEN];
         msg_len_buff = all_data;
         msg_data_buff = all_data + MSG_LEN_BUFF_LEN;
 
+
+    }
+
+    const string get_string(uint32_t offset) const {
+        return string((char *)msg_data_buff + offset);
+    }
+
+    const uint32_t get_int(uint32_t offset) const {
+        return ntohl(*((uint32_t * )(msg_data_buff + offset)));
     }
 
     void print_buff() {
@@ -58,6 +67,7 @@ public:
     uint8_t * msg_len_buff;
     uint8_t * msg_data_buff;
     uint32_t len;
+    SocketProtoBuffer * nextBuffer;
 private:
     uint32_t offset;
 };

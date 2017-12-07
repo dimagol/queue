@@ -33,7 +33,7 @@
                             Private functions
  ---------------------------------------------------------------------------*/
 
-/* Doubles the allocated size associated to a pointer */
+/* Doubles the allocated size associated to a TcpServerConnectionPointer */
 /* 'size' is the current allocated size. */
 static void * mem_double(void * ptr, int size)
 {

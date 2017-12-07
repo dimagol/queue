@@ -18,6 +18,7 @@
 #include "../DefinedMessages.h"
 #include "../ConcurentQueue.h"
 #include "TcpServerConnection.h"
+#include "TcpServerIncomeMessage.h"
 
 
 using namespace boost::asio::ip;
@@ -27,24 +28,23 @@ using namespace std;
 
 class ServerHandler{
 public:
-    unordered_map<uint32_t , TcpServerConnection::pointer> client_map;
+    unordered_map<uint32_t , TcpServerConnection::TcpServerConnectionPointer> client_map;
 
 
-    void register_client(TcpServerConnection::pointer conn, uint32_t id);
+    void register_client(TcpServerConnection::TcpServerConnectionPointer conn, uint32_t id);
     void deregister_client(uint32_t id);
 
-    ConcurentQueue< shared_ptr<pair<uint32_t ,SocketProtoBuffer*>>> concurentQueueFromClients;
-    ConcurentQueue< shared_ptr<pair<uint32_t ,SocketProtoBuffer*>>> concurentQueueToClient;
+    ConcurentQueue<TcpServerIncomeMessage> concurentQueueFromClients;
+    ConcurentQueue<TcpServerIncomeMessage> concurentQueueToClient;
 };
 
 class TcpServer
 {
 public:
-    explicit TcpServer(boost::asio::io_service& io_service);
+    explicit TcpServer(boost::asio::io_service& io_service, uint16_t port);
 
-    void send(uint32_t id,SocketProtoBuffer* buffer);
 
-    shared_ptr<pair<uint32_t ,SocketProtoBuffer*>> recieve();
+    TcpServerIncomeMessage recieve();
 
     void run();
 
@@ -54,7 +54,7 @@ private:
 
     void start_accept();
 
-    void handle_accept(TcpServerConnection::pointer  new_connection,
+    void handle_accept(TcpServerConnection::TcpServerConnectionPointer  new_connection,
                        const boost::system::error_code& error);
 
 
