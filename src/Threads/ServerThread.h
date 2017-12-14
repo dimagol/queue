@@ -12,31 +12,27 @@
 
 using namespace std;
 class ServerThread {
-
-    void init(uint16_t port){
-        LOG_INFO("ServerThread initiate port",port)
-        this->port = port;
-        server = new TcpServer(io_service_server,port);
+public:
+    void init(TcpServer *server_ptr){
+        LOG_INFO("ServerThread initiate")
+        server = server_ptr;
     }
 
     void run(){
+        LOG_INFO("ServerThread run")
         serverThread = new thread(&TcpServer::run, server);
     }
 
-public:
     virtual ~ServerThread() {
-        LOG_INFO("ServerThread end port",port)
+        LOG_INFO("ServerThread end")
         server->setShouldRun(false);
         serverThread->join();
         delete serverThread;
-        delete server;
     }
 
 private:
-    uint16_t port;
-    boost::asio::io_service io_service_server;
-    TcpServer *server;
-    std::thread *serverThread;
+    TcpServer *server = nullptr;
+    std::thread *serverThread = nullptr;
 };
 
 

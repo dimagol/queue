@@ -42,7 +42,7 @@ public:
 class TcpServer
 {
 public:
-    explicit TcpServer(boost::asio::io_service& io_service, uint16_t port);
+    explicit TcpServer(uint16_t port);
 
     void send(const shared_ptr<TcpServerOutcomeMessage> &outMsg);
 
@@ -64,6 +64,8 @@ private:
 
 
 private:
+    boost::asio::io_service io_service;
+    uint16_t port;
     tcp::acceptor acceptor_;
     volatile bool shouldRun = true;
     ServerHandler serverHandler;

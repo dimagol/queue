@@ -3,15 +3,21 @@
 //
 
 #include "BufferPool.h"
-BufferPool* BufferPool::create(uint32_t total, uint32_t bufferLen){
-    return new BufferPool(total, bufferLen);
-}
+#include "../Logging/TSLogger.h"
+
+
+
+BufferPool* BufferPool::bufferPool = BufferPool::create(1024, 65535);
 
 
 BufferPool::BufferPool(uint32_t total, uint32_t bufferLen) : total(total), bufferLen(bufferLen) {
     for (int i = 0; i < total; i++){
         bufferVector.push_back(new SocketProtoBuffer(bufferLen));
     }
+}
+
+BufferPool* BufferPool::create(uint32_t total, uint32_t bufferLen){
+    return new BufferPool(total, bufferLen);
 }
 
 SocketProtoBuffer *BufferPool::get() {
@@ -45,9 +51,13 @@ void BufferPool::releaseList(SocketProtoBuffer *buffer) {
     lock.unlock();
 }
 
-BufferPool* BufferPool::bufferPool = BufferPool::create(1024, 65535);
 
-SocketProtoBuffer *BufferPool::getChunkedBuffer(uint32_t type, const char *str, uint32_t len) {
+
+SocketProtoBuffer *BufferPool::getChunkedWithIntAndStr(uint32_t type, string &str) {
+    return getChunkedWithIntAndData(type, (uint8_t *) str.c_str(), (uint32_t) str.size() + 1);
+
+}
+SocketProtoBuffer *BufferPool::getChunkedWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len) {
     uint32_t numOfChunks = 0;
     uint32_t chunkNumber = 0;
     uint32_t dataLenPerBuffer = bufferLen - sizeof(type) - sizeof(numOfChunks) - sizeof(chunkNumber);
@@ -56,7 +66,11 @@ SocketProtoBuffer *BufferPool::getChunkedBuffer(uint32_t type, const char *str, 
         numOfBuffers++;
     }
     auto ret = getLinked(numOfBuffers);
+    if(ret == nullptr){
+        return nullptr;
+    }
     auto tmp = ret;
+    uint32_t dataOffset = 0;
     for(int i = 0; i < numOfBuffers ; i++){
         tmp->append_int(type,0);
         tmp->append_int(numOfChunks,4);
@@ -64,7 +78,8 @@ SocketProtoBuffer *BufferPool::getChunkedBuffer(uint32_t type, const char *str, 
         if(i == (numOfBuffers -1) && len % dataLenPerBuffer != 0){
             dataLenPerBuffer = len % dataLenPerBuffer;
         }
-        tmp->append_data((uint8_t *)str, dataLenPerBuffer,12);
+        tmp->append_data((uint8_t *)data + dataOffset, dataLenPerBuffer,12);
+        dataOffset+=dataLenPerBuffer;
         tmp = tmp->nextBuffer;
     }
     return ret;
@@ -86,4 +101,29 @@ SocketProtoBuffer *BufferPool::getLinked(uint32_t num) {
     }
     lock.unlock();
     return ret;
+}
+
+SocketProtoBuffer *BufferPool::getWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len) {
+    auto buff = get();
+    if(buff == nullptr){
+        LOG_ERROR("cant get buff")
+        return nullptr;
+    }
+    buff->append_int(type,0);
+    buff->append_data(data,len,4);
+    return buff;
+}
+
+SocketProtoBuffer *BufferPool::getWithIntAndStr(uint32_t type, string &str) {
+    return getWithIntAndData(type,(uint8_t *)str.c_str(), (uint32_t)str.size()+1);
+}
+
+SocketProtoBuffer *BufferPool::getWithInt(uint32_t type) {
+    auto buff = get();
+    if(buff == nullptr){
+        LOG_ERROR("cant get buff")
+        return nullptr;
+    }
+    buff->append_int(type,0);
+    return buff;
 }

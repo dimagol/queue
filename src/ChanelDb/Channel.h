@@ -17,6 +17,7 @@ public:
 
     void init(ProceededEvent &proceededMsg){
         head=proceededMsg.getSocketProtoBuffer();
+        head->set_int(MsgType::LISTEN_POST,0);
         tail = head;
         currentLen=1;
         totalLen = proceededMsg.getNumOfChunks();
@@ -36,6 +37,7 @@ public:
         }
         tail->nextBuffer = proceededMsg.getSocketProtoBuffer();
         tail = proceededMsg.getSocketProtoBuffer();
+        tail->set_int(MsgType::LISTEN_POST,0);
         return true;
     }
 
@@ -56,7 +58,7 @@ public:
         switch (proceededMsg.getType()){
             case MsgType::POST_REGISTER:
                 return handlePostRegister(proceededMsg);
-            case MsgType::POST:
+            case MsgType::POST_POST:
                 return handlePost(proceededMsg);
             case MsgType::POST_DEREGISTER:
                 return handlePostDeregister(proceededMsg);

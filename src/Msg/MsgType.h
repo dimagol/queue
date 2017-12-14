@@ -10,7 +10,7 @@ enum MsgType {
 
     POST_MSG_START_ =           0,
     POST_REGISTER =             1,
-    POST =                      2,
+    POST_POST =                 2,
     POST_DEREGISTER =           3,
     POST_DEREGISTER_ALL =       4,
     POST_DISCONNECT =           5,
@@ -19,11 +19,12 @@ enum MsgType {
 
     LISTEN_MSG_START=           1000,
     LISTEN_REGISTER =           1001,
-    LISTEN_DEREGISTER =         1002,
-    LISTEN_DEREGISTER_ALL =     1003,
-    LISTEN_DISCONNECT =         1004,
-    LISTEN_LIST_CHANELES_REQ =  1005,
-    LISTEN_LIST_CHANELES_RES =  1006,
+    LISTEN_POST =               1002,
+    LISTEN_DEREGISTER =         1003,
+    LISTEN_DEREGISTER_ALL =     1004,
+    LISTEN_DISCONNECT =         1005,
+    LISTEN_LIST_CHANELES_REQ =  1006,
+    LISTEN_LIST_CHANELES_RES =  1007,
 
 
 };

@@ -16,7 +16,7 @@ public:
         switch (incomeMessage.getBuffer()->get_int(CONSTS_MSG_TYPE_OFFSET)){
             case MsgType::POST_REGISTER:
                 return handleRegisterPost(incomeMessage);
-            case MsgType::POST:
+            case MsgType::POST_POST:
                 return handlePost(incomeMessage);
             case MsgType::POST_DEREGISTER:
                 return handleDeregisterPost(incomeMessage);
@@ -55,7 +55,7 @@ private:
     ProceededEvent handlePost(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
         return ProceededEvent(buff->get_string(CONSTS_POST_CHANEL_OFFSET),
-                            MsgType::POST,
+                            MsgType::POST_POST,
                             buff,
                             buff->get_int(CONSTS_POST_MSG_CHUNK_OFFSET),
                             buff->get_int(CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET),

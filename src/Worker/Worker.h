@@ -9,6 +9,7 @@
 #include "../ChanelDb/ChannelDb.h"
 #include "../Server/TcpServer.h"
 #include "../Processor/MsgToEventProcessor.h"
+#include "../Msg/MsgBuilder.h"
 
 class Worker {
 
@@ -16,11 +17,11 @@ public:
     void run();
 
     // setters
-    void setChannelDb(const shared_ptr<ChannelDb> &channelDb);
+    void setChannelDb(ChannelDb * channelDb);
 
-    void setProducerServer(const shared_ptr<TcpServer> &producerServer);
+    void setProducerServer(TcpServer* producerServer);
 
-    void setConsumerServer(const shared_ptr<TcpServer> &consumerServer);
+    void setConsumerServer(TcpServer* consumerServer);
 
     void setShouldRun(volatile bool shouldRun);
 
@@ -57,10 +58,13 @@ private:
 
 private:
     volatile bool shouldRun = true;
-    shared_ptr<ChannelDb> channelDb;
-    shared_ptr<TcpServer> producerServer;
-    shared_ptr<TcpServer> consumerServer;
+    ChannelDb * channelDb;
+    TcpServer * producerServer;
+    TcpServer * consumerServer;
     MsgToEventProcessor processor;
+    MsgBuilder  *msgBuilder;
+public:
+    void setBuilder(MsgBuilder *builder);
 
 };
 

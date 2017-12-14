@@ -36,9 +36,9 @@ public:
         cout << "all_data " << " msg_data_buff: " << msg_data_buff << " len: " << get_msg_len() << endl;
     }
 
-    bool set_by_str(string &s){
-        set_msg_len(static_cast<uint32_t>(s.size() + 1));
-        set_data((const uint8_t *)(s.c_str()), static_cast<uint32_t>(s.size() + 1));
+    bool set_by_str(string &s, uint32_t type){
+        append_int(type,0);
+        append_data((const uint8_t *)(s.c_str()), s.size() + 1, 4);
     }
 
     uint32_t get_msg_len(){
@@ -61,6 +61,11 @@ public:
     void append_data(const uint8_t * data, uint32_t data_len, uint32_t offset){
         memcpy(msg_data_buff + offset, data, data_len);
         *((uint32_t *)msg_len_buff) = htonl(offset + data_len);
+    }
+
+    void set_int(uint32_t data, uint32_t offset){
+        data = htonl(data);
+        memcpy(msg_data_buff + offset, (uint8_t *)(&data), 4);
     }
 
     void append_int(uint32_t data, uint32_t offset){

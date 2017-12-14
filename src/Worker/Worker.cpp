@@ -6,7 +6,7 @@
 
 
 void Worker::run() {
-    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr ){
+    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr || msgBuilder){
         LOG_ERROR("not set");
         return;
     }
@@ -31,7 +31,7 @@ void Worker::handlePostMsg(ProceededEvent &event) const {
         case POST_REGISTER:
             handlePostRegister(event);
             break;
-        case POST:
+        case POST_POST:
             handlePost(event);
             break;
         case POST_DEREGISTER:
@@ -121,9 +121,8 @@ void Worker::handlePostDisconnect(ProceededEvent &event) const {
 }
 
 void Worker::handlePostListChannels(ProceededEvent &event) const {
-    string str = this->channelDb->getChannelListStr();
-    auto buff = BufferPool::bufferPool->getChunkedBuffer(POST_LIST_CHANELES_RES, str.c_str(),
-                                                         str.size());
+    string channelsStr = this->channelDb->getChannelListStr();
+    auto buff = msgBuilder->buildListenListChannelsResMsg(channelsStr);
     if (buff != nullptr) {
         this->producerServer->send(make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id()));
     } else{
@@ -165,9 +164,7 @@ void Worker::handleListenDisconnect(ProceededEvent &event) const {
 
 void Worker::handleListenListChannels(ProceededEvent &event) const {
     string str = this->channelDb->getChannelListStr();
-    auto buff = BufferPool::bufferPool->getChunkedBuffer(LISTEN_LIST_CHANELES_RES,
-                                                         str.c_str(),
-                                                         str.size());
+    auto buff = msgBuilder->buildListenListChannelsResMsg(str);
     if (buff != nullptr) {
         this->consumerServer->send(make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id()));
     } else{
@@ -177,18 +174,22 @@ void Worker::handleListenListChannels(ProceededEvent &event) const {
 }
 
 // setters
-void Worker::setChannelDb(const shared_ptr<ChannelDb> &channelDb) {
-    Worker::channelDb = channelDb;
+void Worker::setChannelDb(ChannelDb * channelDb) {
+    channelDb = channelDb;
 }
 
-void Worker::setProducerServer(const shared_ptr<TcpServer> &producerServer) {
+void Worker::setProducerServer(TcpServer* producerServer) {
     Worker::producerServer = producerServer;
 }
 
-void Worker::setConsumerServer(const shared_ptr<TcpServer> &consumerServer) {
-    Worker::consumerServer = consumerServer;
+void Worker::setConsumerServer(TcpServer* consumerServer) {
+    consumerServer = consumerServer;
 }
 
 void Worker::setShouldRun(volatile bool shouldRun) {
     Worker::shouldRun = shouldRun;
+}
+
+void Worker::setBuilder(MsgBuilder *builder) {
+    Worker::msgBuilder = builder;
 }

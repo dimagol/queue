@@ -11,8 +11,10 @@ void ServerHandler::deregister_client(uint32_t id) {
     }
 }
 
-TcpServer::TcpServer(boost::asio::io_service &io_service, uint16_t port)
-        : acceptor_(io_service, tcp::endpoint(tcp::v4(), port))
+TcpServer::TcpServer(uint16_t port)
+        : io_service(),
+          port(port),
+          acceptor_(io_service, tcp::endpoint(tcp::v4(), port))
 {
     start_accept();
 }
