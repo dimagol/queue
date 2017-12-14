@@ -16,3 +16,6 @@ SocketProtoBuffer * generate_str_msg(const char *in){
 }
 const char welcome[] = "Welcome to server\n";
 SocketProtoBuffer * DefinedMessages::hello_msg = generate_str_msg(welcome);
+
+const char disconnect[] = "Goodbye\n";
+SocketProtoBuffer * DefinedMessages::goodbye_msg = generate_str_msg(welcome);

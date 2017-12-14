@@ -49,6 +49,47 @@ void TcpServerConnection::handle_send_welcome_message(const boost::system::error
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::bytes_transferred));
 }
+
+
+
+
+
+
+
+
+
+// send the welcome message
+void TcpServerConnection::send_server_goodbye() {
+    boost::asio::async_write(socket_,
+                             boost::asio::buffer(DefinedMessages::goodbye_msg->all_data,
+                                                 DefinedMessages::goodbye_msg->get_msg_all_data_len()),
+                             boost::bind(&TcpServerConnection::handle_send_server_goodbye,
+                                         shared_from_this(),
+                                         boost::asio::placeholders::error,
+                                         boost::asio::placeholders::bytes_transferred));
+}
+
+void TcpServerConnection::handle_send_server_goodbye(const boost::system::error_code &errorCode, size_t size) {
+    serverHandler->deregister_client(id);
+    this->close();
+    if (__glibc_unlikely(errorCode != nullptr)){
+        LOG_WARN("error:" ,errorCode);
+        return;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 void TcpServerConnection::handle_read_len(const boost::system::error_code &errorCode, size_t size){
     if (__glibc_unlikely(errorCode != nullptr)){
         LOG_WARN("error:" ,errorCode);
@@ -92,7 +133,7 @@ void TcpServerConnection::handle_read_data(const boost::system::error_code &erro
                                         boost::asio::placeholders::bytes_transferred));
 }
 
-void TcpServerConnection::send_data(SocketProtoBuffer *buffer) {
+void TcpServerConnection::sendBulk(SocketProtoBuffer *buffer) {
     boost::asio::async_write(socket_,
                              boost::asio::buffer(buffer->all_data, buffer->get_msg_all_data_len()),
                              boost::bind(&TcpServerConnection::handle_send_data,
@@ -107,10 +148,25 @@ tcp::socket& TcpServerConnection::socket() {
 }
 
 void TcpServerConnection::handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size) {
-    BufferPool::bufferPool->release(buffer);
+    buffer->decRef();
+    if(buffer->sendingRefCount == 0){
+        BufferPool::bufferPool->release(buffer);
+    }
+
     if (__glibc_unlikely(errorCode != nullptr)){
         LOG_WARN("error:" ,errorCode);
+        auto tmpBuffer = buffer->nextBuffer;
+        while (tmpBuffer != nullptr){
+            tmpBuffer->decRef();
+        }
         serverHandler->deregister_client(id);
         return;
     }
+    if(buffer->nextBuffer != nullptr){
+        sendBulk(buffer->nextBuffer);
+    }
+}
+
+void TcpServerConnection::close() {
+    socket().close();
 }

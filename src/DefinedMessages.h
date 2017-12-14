@@ -11,6 +11,7 @@
 class DefinedMessages {
 public:
     static SocketProtoBuffer * hello_msg;
+    static SocketProtoBuffer * goodbye_msg;
 };
 
 

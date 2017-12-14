@@ -16,7 +16,7 @@
 #include <utility>
 
 #include "../DefinedMessages.h"
-#include "../ConcurentQueue.h"
+#include "../Queue/ConcurentQueue.h"
 #include "TcpServerConnection.h"
 #include "TcpServerIncomeMessage.h"
 #include "TcpServerOutcomeMessage.h"
@@ -52,6 +52,8 @@ public:
 
     void setShouldRun(volatile bool shouldRun);
 
+    void disconnectClient(uint32_t id);
+
 private:
 
     void start_accept();
@@ -66,6 +68,11 @@ private:
     volatile bool shouldRun = true;
     ServerHandler serverHandler;
 
+
+
+    void sendNormalMsg(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const;
+
+    void sendDisconnect(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const;
 };
 
 #endif //TCP_SHMAFKA_SERVER_H

@@ -19,7 +19,7 @@ TcpServer::TcpServer(boost::asio::io_service &io_service, uint16_t port)
 
 
 shared_ptr<TcpServerIncomeMessage> TcpServer::recieve() {
-    return serverHandler.concurentQueueFromClients.pop();
+    return serverHandler.concurentQueueFromClients.try_pop();
 }
 
 void TcpServer::run() {
@@ -28,17 +28,49 @@ void TcpServer::run() {
         acceptor_.get_io_service().poll();
         auto outMsg = serverHandler.concurentQueueToClient.try_pop();
         while (outMsg != nullptr){
-            for (auto id : outMsg->getSendToSet()){
+            switch (outMsg->getType()){
+                case TcpServerOutcomeMessage::DISCONNECT:
+                    sendDisconnect(outMsg);
+                case TcpServerOutcomeMessage::NORMAL:
+                    sendNormalMsg(outMsg);
+                    break;
+                default:
+                    LOG_ERROR("unsapported type ",outMsg->getType());
+            }
+            sendNormalMsg(outMsg);
+        }
+
+    }
+}
+
+void TcpServer::sendDisconnect(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const {
+    for (auto id : outMsg->getSendToSet()){
+                        auto connPair = serverHandler.client_map.find(id);
+                        if(__glibc_likely(connPair != serverHandler.client_map.end())){
+                            connPair->second->send_server_goodbye();
+                        } else{
+                            LOG_WARN("cant send data to ",id);
+                        }
+                    }
+}
+
+void TcpServer::sendNormalMsg(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const {
+    uint32_t refCount = 0;
+    for (auto id : outMsg->getSendToSet()){
                 auto connPair = serverHandler.client_map.find(id);
                 if(__glibc_likely(connPair != serverHandler.client_map.end())){
-                    connPair->second->send_data(outMsg->getBuffer());
+                    refCount++;
+                    connPair->second->sendBulk(outMsg->getBuffer());
                 } else{
                     LOG_WARN("cant send data to ",id);
                 }
             }
-        }
-
-    }
+    auto buff = outMsg->getBuffer();
+    if(refCount == 0){
+                BufferPool::bufferPool->releaseList(buff);
+            } else{
+                buff->setRefCountList(refCount);
+            }
 }
 
 void TcpServer::setShouldRun(volatile bool shouldRun) {
@@ -63,4 +95,8 @@ void TcpServer::handle_accept(TcpServerConnection::TcpServerConnectionPointer ne
 
 void TcpServer::send(const shared_ptr<TcpServerOutcomeMessage> &outMsg) {
     serverHandler.concurentQueueToClient.push(outMsg);
+}
+
+void TcpServer::disconnectClient(uint32_t id){
+    serverHandler.concurentQueueToClient.push(make_shared<TcpServerOutcomeMessage>(id, TcpServerOutcomeMessage::DISCONNECT));
 }

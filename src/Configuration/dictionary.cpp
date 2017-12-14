@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
         sprintf(cval, "%04d", i);
         val = dictionary_get(d, cval, DICT_INVALID_KEY);
         if (val==DICT_INVALID_KEY) {
-            printf("cannot get value for key [%s]\n", cval);
+            printf("cannot getChunkedBuffer value for key [%s]\n", cval);
         }
     }
     printf("unsetting %d values...\n", NVALS);

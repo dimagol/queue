@@ -22,6 +22,10 @@ public:
         return id;
     }
 
+    void releaseBuffer(){
+        BufferPool::bufferPool->release(buffer);
+    }
+
 private:
     SocketProtoBuffer * buffer;
     const uint32_t id;

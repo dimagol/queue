@@ -37,23 +37,23 @@ int testServer(){
 //        client.send(buffer);
 //        server.recieve()->second->print_buff();
 //
-//        buffer = BufferPool::bufferPool->get();
+//        buffer = BufferPool::bufferPool->getChunkedBuffer();
 //        buffer->set_by_str(str1);
 //        client.send(buffer);
 //        server.recieve()->second->print_buff();
 //
-//        buffer = BufferPool::bufferPool->get();
+//        buffer = BufferPool::bufferPool->getChunkedBuffer();
 //        buffer->set_by_str(str2);
 //        server.send(0,buffer);
 //        client.recieve()->print_buff();
 //
-//        buffer = BufferPool::bufferPool->get();
+//        buffer = BufferPool::bufferPool->getChunkedBuffer();
 //        buffer->set_by_str(str1);
 //        client.send(buffer);
 //        server.recieve()->second->print_buff();
 //
 //
-//        buffer = BufferPool::bufferPool->get();
+//        buffer = BufferPool::bufferPool->getChunkedBuffer();
 //        buffer->set_by_str(str3);
 //        server.send(0,buffer);
 //        client.recieve()->print_buff();

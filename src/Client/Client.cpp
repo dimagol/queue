@@ -23,7 +23,7 @@ Client::Client(boost::asio::io_service &io_service, string &host, string &port)
                                boost::bind(&Client::handle_connect, this,
                                            boost::asio::placeholders::error));
 }
-//get connect msg
+//getChunkedBuffer connect msg
 void Client::handle_connect(const boost::system::error_code &error) {
     if (!error)
     {

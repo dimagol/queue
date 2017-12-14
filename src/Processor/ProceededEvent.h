@@ -12,24 +12,24 @@
 
 using namespace std;
 
-class ProceededMsg {
+class ProceededEvent {
 
 public:
 
-    ProceededMsg(const string &channelName,
+    ProceededEvent(const string &channelName,
                  const MsgType type,
                  const uint32_t sender_id)
             : channelName(channelName),
               type(type),
               sender_id(sender_id){}
 
-    ProceededMsg(const MsgType type,
+    ProceededEvent(const MsgType type,
                  const uint32_t sender_id)
             : channelName(""),
               type(type),
               sender_id(sender_id){}
 
-    ProceededMsg(const string &channelName,
+    ProceededEvent(const string &channelName,
                  const MsgType type,
                  SocketProtoBuffer *socketProtoBuffer,
                  const uint32_t chunk,
@@ -64,6 +64,9 @@ public:
 
     inline const uint32_t getNumOfChunks() const {
         return num_of_chunks;
+    }
+    inline void releaseBufferList(){
+        BufferPool::bufferPool->releaseList(socketProtoBuffer);
     }
 private:
     const string channelName;
