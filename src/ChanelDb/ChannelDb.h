@@ -42,14 +42,6 @@ public:
         return ret;
     }
 
-    const string& getChannelListStr(){
-        std::stringstream ss;
-        for(auto channel : channelMap){
-                ss << channel.first << endl;
-        }
-        return ss.str();
-    }
-
     shared_ptr<vector<shared_ptr<Channel>>> getAllListenChannelsForId(uint32_t id){
         auto ret = make_shared<vector<shared_ptr<Channel>>>();
         for(auto channel : channelMap){
@@ -58,6 +50,14 @@ public:
             }
         }
         return ret;
+    }
+
+    const string getChannelListStr(){
+        std::stringstream ss;
+        for(auto channel : channelMap){
+                ss << channel.first << endl;
+        }
+        return ss.str();
     }
 
 

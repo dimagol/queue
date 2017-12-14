@@ -37,8 +37,7 @@ set(SOURCE_FILES src/main.cpp
         src/Server/TcpServerConnection.h
         src/Client/Client.cpp
         src/Client/Client.h
-        src/Logging/TSLogger.cpp
-        src/Logging/TSLogger.h src/Processor/MsgToEventProcessor.cpp src/Processor/MsgToEventProcessor.h src/Processor/ProceededEvent.cpp src/Processor/ProceededEvent.h src/Server/TcpServerIncomeMessage.h src/Msg/MsgType.h src/Msg/MsgConsts.h src/ChanelDb/ChannelDb.cpp src/ChanelDb/ChannelDb.h src/ChanelDb/Channel.cpp src/ChanelDb/Channel.h src/Server/TcpServerOutcomeMessage.h src/Threads/ServerThread.cpp src/Threads/ServerThread.h src/Worker/Worker.cpp src/Worker/Worker.h)
+        src/Logging/TSLogger.h src/Processor/MsgToEventProcessor.cpp src/Processor/MsgToEventProcessor.h src/Processor/ProceededEvent.cpp src/Processor/ProceededEvent.h src/Server/TcpServerIncomeMessage.h src/Msg/MsgType.h src/Msg/MsgConsts.h src/ChanelDb/ChannelDb.cpp src/ChanelDb/ChannelDb.h src/ChanelDb/Channel.cpp src/ChanelDb/Channel.h src/Server/TcpServerOutcomeMessage.h src/Threads/ServerThread.cpp src/Threads/ServerThread.h src/Worker/Worker.cpp src/Worker/Worker.h src/Buff/SocketProtoBuffer.h)
 
 if(Boost_FOUND)
     include_directories(

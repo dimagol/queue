@@ -24,6 +24,8 @@ public:
                 return handleDeregisterAllPost(incomeMessage);
             case MsgType::POST_DISCONNECT:
                 return handleDisconnectPost(incomeMessage);
+            case MsgType::POST_LIST_CHANELES_REQ:
+                return handleListChanelsPost(incomeMessage);
 
             case MsgType::LISTEN_REGISTER:
                 return handleRegisterListen(incomeMessage);
@@ -33,9 +35,8 @@ public:
                 return handleDeregisterListenAll(incomeMessage);
             case MsgType::LISTEN_DISCONNECT:
                 return handleDisconnectListen(incomeMessage);
-
-            case MsgType::LIST_CHANELES:
-                return handleListChanels(incomeMessage);
+            case MsgType::LISTEN_LIST_CHANELES_REQ:
+                return handleListChanelsListen(incomeMessage);
 
             default:
                 return ProceededEvent(MsgType::UNDEFINED,incomeMessage.getId());
@@ -95,8 +96,12 @@ private:
     }
 
 
-    ProceededEvent handleListChanels(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::LIST_CHANELES, incomeMessage.getId());
+    ProceededEvent handleListChanelsPost(const TcpServerIncomeMessage &incomeMessage){
+        return ProceededEvent(MsgType::POST_LIST_CHANELES_REQ, incomeMessage.getId());
+    }
+
+    ProceededEvent handleListChanelsListen(const TcpServerIncomeMessage &incomeMessage){
+        return ProceededEvent(MsgType::LISTEN_LIST_CHANELES_REQ, incomeMessage.getId());
     }
 };
 
