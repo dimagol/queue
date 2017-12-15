@@ -4,7 +4,7 @@
 
 #include "BufferPool.h"
 #include "../Logging/TSLogger.h"
-
+#include "../Msg/MsgConsts.h"
 
 
 BufferPool* BufferPool::bufferPool = BufferPool::create(1024, 65535);
@@ -56,6 +56,58 @@ void BufferPool::releaseList(SocketProtoBuffer *buffer) {
 SocketProtoBuffer *BufferPool::getChunkedWithIntAndStr(uint32_t type, string &str) {
     return getChunkedWithIntAndData(type, (uint8_t *) str.c_str(), (uint32_t) str.size() + 1);
 
+}
+
+SocketProtoBuffer *BufferPool::getChunkedWithIntAndChannelStr(uint32_t type, const string &channel,const  string &str) {
+    if(channel.size() > 16){
+        LOG_ERROR("bad channel len ",channel);
+        return nullptr;
+    }
+    return getChunkedWithIntAndChannelData(type,
+                                           (uint8_t *)channel.c_str(),
+                                           (uint32_t) channel.size() + 1,
+                                           (uint8_t *) str.c_str(),
+                                           (uint32_t) str.size() + 1);
+
+}
+
+
+SocketProtoBuffer *BufferPool::getChunkedWithIntAndChannelData(uint32_t type,
+                                                               uint8_t * channel,
+                                                               uint32_t channelLen,
+                                                               uint8_t *data,
+                                                               uint32_t dataLen) {
+    uint32_t chunkNumber = 1;
+    uint32_t dataLenPerBuffer = bufferLen - sizeof(type) - sizeof(uint32_t) - sizeof(chunkNumber) - CONSTS_POST_CHANEL_LEN;
+    uint32_t  numOfBuffers = dataLen / dataLenPerBuffer;
+    if (dataLen % dataLenPerBuffer != 0){
+        numOfBuffers++;
+    }
+    auto ret = getLinked(numOfBuffers);
+    if(ret == nullptr){
+        return nullptr;
+    }
+    auto tmp = ret;
+    uint32_t dataOffset = 0;
+    for(int i = 0; i < numOfBuffers ; i++){
+        tmp->append_int(type,CONSTS_MSG_TYPE_OFFSET);
+        cout << tmp->get_msg_len() << endl;
+        tmp->append_data(channel,channelLen,CONSTS_POST_CHANEL_OFFSET);
+        cout << tmp->get_msg_len() << endl;
+        tmp->append_int(numOfBuffers,CONSTS_POST_MSG_CHUNK_OFFSET);
+        cout << tmp->get_msg_len() << endl;
+        chunkNumber++;
+        tmp->append_int(chunkNumber,CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET);
+        cout << tmp->get_msg_len() << endl;
+        if(i == (numOfBuffers -1) && dataLen % dataLenPerBuffer != 0){
+            dataLenPerBuffer = dataLen % dataLenPerBuffer;
+        }
+        tmp->append_data(data + dataOffset, dataLenPerBuffer,CONSTS_POST_MSG_DATA_OFFSTE);
+        cout << tmp->get_msg_len() << endl;
+        dataOffset+=dataLenPerBuffer;
+        tmp = tmp->nextBuffer;
+    }
+    return ret;
 }
 SocketProtoBuffer *BufferPool::getChunkedWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len) {
     uint32_t numOfChunks = 0;
@@ -114,7 +166,7 @@ SocketProtoBuffer *BufferPool::getWithIntAndData(uint32_t type, const uint8_t *d
     return buff;
 }
 
-SocketProtoBuffer *BufferPool::getWithIntAndStr(uint32_t type, string &str) {
+SocketProtoBuffer *BufferPool::getWithIntAndStr(uint32_t type, const string &str) {
     return getWithIntAndData(type,(uint8_t *)str.c_str(), (uint32_t)str.size()+1);
 }
 

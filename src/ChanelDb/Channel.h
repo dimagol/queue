@@ -13,19 +13,21 @@
 using namespace std;
 class FullMsgBuffersContainer{
 public:
-    FullMsgBuffersContainer() {}
-
-    void init(ProceededEvent &proceededMsg){
-        head=proceededMsg.getSocketProtoBuffer();
-        head->set_int(MsgType::LISTEN_POST,0);
-        tail = head;
-        currentLen=1;
-        totalLen = proceededMsg.getNumOfChunks();
-
-    }
+    FullMsgBuffersContainer():currentLen(0),head(nullptr),tail(nullptr),totalLen(0) {}
 
     bool append(ProceededEvent &proceededMsg){
         currentLen++;
+        if(currentLen == 1){
+            if(proceededMsg.getChunk() != 1){
+                LOG_ERROR("unable process buffer, chunk:",proceededMsg.getChunk()," currentLen:", currentLen);
+                return false;
+            }
+            head=proceededMsg.getSocketProtoBuffer();
+            head->set_int(MsgType::LISTEN_POST,0);
+            tail = head;
+            totalLen = proceededMsg.getNumOfChunks();
+
+        }
         if(__glibc_unlikely(proceededMsg.getChunk() != currentLen)){
             LOG_ERROR("unable process buffer, chunk:",proceededMsg.getChunk()," currentLen:", currentLen);
             return false;
@@ -53,7 +55,7 @@ public:
 class Channel {
 public:
     Channel(const string &chanelName) : chanelName(chanelName) {}
-
+    Channel() : chanelName("") {}
     void feed(ProceededEvent &proceededMsg){
         switch (proceededMsg.getType()){
             case MsgType::POST_REGISTER:
@@ -108,58 +110,38 @@ public:
 
 private:
     void handlePostRegister(ProceededEvent &proceededMsg){
+//        cout << proceededMsg.getSocketProtoBuffer()->get_msg_len() << endl;
         if(userPostingMap.find(proceededMsg.getSender_id()) != userPostingMap.end()){
             LOG_WARN("already exists " , proceededMsg.getSender_id());
         } else{
             userPostingMap.insert(make_pair<uint32_t , shared_ptr<FullMsgBuffersContainer>>(
                             proceededMsg.getSender_id(),
-                            make_shared<FullMsgBuffersContainer>())).first->second->init(proceededMsg);
+                            make_shared<FullMsgBuffersContainer>()));
         }
     }
     void handlePost(ProceededEvent &proceededMsg){
         haveNew = false;
-        if(proceededMsg.getChunk() != 1){
-            auto buffCont = userPostingMap.find(proceededMsg.getSender_id());
-            if(buffCont == userPostingMap.end()){
-                LOG_ERROR("reorder event");
-                return;
-            }
-            if (!buffCont->second->append(proceededMsg)){
-                userPostingMap.erase(proceededMsg.getSender_id());
-                LOG_ERROR("cant append");
-                return;
-            }
-            if(buffCont->second->isDone()){
-                buff_done.second = buffCont->second;
-                buff_done.first = buffCont->first;
-                userPostingMap.erase(buffCont);
-                haveNew = true;
-                return;
-            }
-            return;
-
-        } else {
-            auto fromMap = userPostingMap.find(proceededMsg.getSender_id());
-            if(fromMap == userPostingMap.end()){
-                LOG_ERROR("cant find buffer for ",proceededMsg.getSender_id(), " " , chanelName);
-                return;
-            } else{
-                if (!fromMap->second->append(proceededMsg)){
-                    LOG_ERROR("cant process",proceededMsg.getSender_id(), " " , chanelName);
-                    return;
-                }
-            }
-
-            if(fromMap->second->isDone()){
-                buff_done.first = proceededMsg.getSender_id();
-                buff_done.second= fromMap->second;
-                userPostingMap.erase(proceededMsg.getSender_id());
-                haveNew = true;
-                return;
-            }
+//        cout << proceededMsg.getSocketProtoBuffer()->get_msg_len() << endl;
+        auto buffCont = userPostingMap.find(proceededMsg.getSender_id());
+        if(buffCont == userPostingMap.end()){
+            LOG_ERROR("reorder event");
             return;
         }
+        if (!buffCont->second->append(proceededMsg)){
+            userPostingMap.erase(proceededMsg.getSender_id());
+            LOG_ERROR("cant append");
+            return;
+        }
+        if(buffCont->second->isDone()){
+            buff_done.second = buffCont->second;
+            buff_done.first = buffCont->first;
+            userPostingMap.erase(buffCont);
+            haveNew = true;
+            return;
+        }
+        return;
     }
+
     void handlePostDeregister(ProceededEvent &proceededMsg){
         if (userPostingMap.erase(proceededMsg.getSender_id()) != 1){
             LOG_ERROR("cant deregister")

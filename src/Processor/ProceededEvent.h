@@ -42,7 +42,7 @@ public:
             num_of_chunks(num_of_chunks),
             sender_id(sender_id) {}
 
-    inline const string &getChannelName() const {
+    inline const string getChannelName() const {
         return channelName;
     }
 

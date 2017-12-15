@@ -6,16 +6,29 @@
 
 int testLog()
 {
-    globalLogger.init("log.log", true, TSLogger::WARN);
+    TSLogger::globalLogger->init("log.log", true, TSLogger::WARN);
 //    LOG_ERROR("dima ", " dddd")
 }
 
 int testServer(){
     try
     {
-        globalLogger.init("log.log", true, TSLogger::TRACE);
-        Chain chain(8081,8082);
+        TSLogger::globalLogger->init("log.log", true, TSLogger::TRACE);
+        MsgBuilder builder(BufferPool::bufferPool);
+        Chain chain(8081,8082,&builder);
+
         chain.runThreads();
+        sleep(1);
+
+        boost::asio::io_service io_service;
+        string host = "127.0.0.1";
+        string port = "8082";
+        Client client(io_service, host,port);
+        thread tClient(boost::bind(&Client::run, &client));
+        chain.getChannelDb().getChannel("xxxx");
+
+        client.send(builder.buildPostRegistrationMsg("zzzz"));
+        client.send(builder.buildPostPostChannelsResMsg("zzzz","dima dima"));
         sleep(100);
 //        boost::asio::io_service io_service_server;
 //        TcpServer server(io_service_server,8081);

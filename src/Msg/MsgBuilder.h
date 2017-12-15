@@ -14,7 +14,7 @@ class MsgBuilder {
 public:
     explicit MsgBuilder(BufferPool *bufferPool);
 
-    SocketProtoBuffer * buildPostRegistrationMsg(string &channel){
+    SocketProtoBuffer * buildPostRegistrationMsg(const string &channel){
         if(channel.size() > 16){
             LOG_ERROR("got to big channel name ", channel)
             return nullptr;
@@ -22,8 +22,8 @@ public:
         return bufferPool->getWithIntAndStr(POST_REGISTER,channel);
     }
 
-    SocketProtoBuffer * buildPostPostChannelsResMsg(string &dataStr) {
-        return bufferPool->getChunkedWithIntAndStr(POST_POST, dataStr);
+    SocketProtoBuffer * buildPostPostChannelsResMsg(const string &channel, const string &dataStr) {
+        return bufferPool->getChunkedWithIntAndChannelStr(POST_POST, channel, dataStr);
     }
 
     SocketProtoBuffer * buildPostPostChannelsResMsg(const uint8_t * data, uint32_t len) {

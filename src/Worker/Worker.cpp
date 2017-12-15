@@ -6,21 +6,33 @@
 
 
 void Worker::run() {
-    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr || msgBuilder){
+    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr || msgBuilder == nullptr ){
         LOG_ERROR("not set");
         return;
     }
     while (shouldRun){
         auto prodMsg = producerServer->recieve();
+
         if(prodMsg != nullptr){
+            cout << prodMsg->getBuffer()->get_msg_len() << " dd" << endl;
             auto event = processor.processBuff(*prodMsg);
             if(event.getType() < MsgType::LISTEN_MSG_START){
                 handlePostMsg(event);
             } else{
+                LOG_ERROR("wrong msg type")
+            }
+        } else {
+        }
+
+        auto consMsg = consumerServer->recieve();
+        if(consMsg != nullptr){
+            auto event = processor.processBuff(*consMsg);
+            if(event.getType() < MsgType::LISTEN_MSG_START){
+                LOG_ERROR("wrong msg type")
+            } else{
                 handleListenMsg(event);
             }
         } else {
-            LOG_ERROR("got null event")
         }
     }
     LOG_INFO("worker done")
@@ -175,7 +187,7 @@ void Worker::handleListenListChannels(ProceededEvent &event) const {
 
 // setters
 void Worker::setChannelDb(ChannelDb * channelDb) {
-    channelDb = channelDb;
+    Worker::channelDb = channelDb;
 }
 
 void Worker::setProducerServer(TcpServer* producerServer) {
@@ -183,7 +195,7 @@ void Worker::setProducerServer(TcpServer* producerServer) {
 }
 
 void Worker::setConsumerServer(TcpServer* consumerServer) {
-    consumerServer = consumerServer;
+    Worker::consumerServer = consumerServer;
 }
 
 void Worker::setShouldRun(volatile bool shouldRun) {

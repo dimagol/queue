@@ -22,12 +22,15 @@ public:
 
     SocketProtoBuffer* get();
     SocketProtoBuffer* getWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len);
-    SocketProtoBuffer* getWithIntAndStr(uint32_t type, string &str);
+    SocketProtoBuffer* getWithIntAndStr(uint32_t type, const string &str);
     SocketProtoBuffer* getWithInt(uint32_t type);
     void release(SocketProtoBuffer *);
     void releaseList(SocketProtoBuffer *buffer);
     SocketProtoBuffer *getChunkedWithIntAndData(uint32_t type, const uint8_t *str, uint32_t len);
     SocketProtoBuffer *getChunkedWithIntAndStr(uint32_t type, string &str);
+
+    SocketProtoBuffer *getChunkedWithIntAndChannelStr(uint32_t type, const string &channel, const string &str);
+    SocketProtoBuffer *getChunkedWithIntAndChannelData(uint32_t type, uint8_t *channel, uint32_t channelLen, uint8_t *data, uint32_t dataLen);
     virtual ~BufferPool() {
 
     }
@@ -38,10 +41,7 @@ private:
     mutex lock;
     vector<SocketProtoBuffer *> bufferVector;
     uint32_t total;
-
     uint32_t bufferLen;
-
-
 };
 
 #endif //TCP_SHMAFKA_BUFFERPOLL_H

@@ -11,16 +11,18 @@
 
 class Chain {
 public:
-    Chain(uint16_t consumerPort, uint16_t producerPort) :
+    Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder) :
             consumerPort(consumerPort),
             producerPort(producerPort),
             consumerTcpServer(consumerPort),
-            producerTcpServer(producerPort)
+            producerTcpServer(producerPort),
+            builder(builder)
     {
         worker.setShouldRun(true);
         worker.setChannelDb(&channelDb);
         worker.setConsumerServer(&consumerTcpServer);
         worker.setProducerServer(&producerTcpServer);
+        worker.setBuilder(builder);
 
         workerThread.init(&worker);
         consumerServerThread.init(&consumerTcpServer);
@@ -46,6 +48,13 @@ private:
     TcpServer consumerTcpServer;
     TcpServer producerTcpServer;
     ChannelDb channelDb;
+public:
+    ChannelDb &getChannelDb() {
+        return channelDb;
+    }
+
+private:
+    MsgBuilder *builder;
 };
 
 

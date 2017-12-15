@@ -40,6 +40,10 @@ public:
     enum Severity{TRACE =1,DEBUG =2,INFO =3,WARN =4,ERROR =5};
 
 
+    TSLogger() {
+        cout << "" << endl;
+    }
+
     bool init(const string &a_logFileName,
               bool a_print = false,
               Severity a_logSev = WARN) {
@@ -88,13 +92,13 @@ public:
         if (logFile != nullptr) {
             (*logFile) << fullMsg;
             logFile->flush();
-            lock.unlock();
         }
 
         if (print){
             cout << fullMsg;
             cout.flush();
         }
+        lock.unlock();
 
     }
 
@@ -135,6 +139,7 @@ private:
 
 public:
     Severity logSev = INFO;
+    static TSLogger *globalLogger;
 private:
     ofstream  *logFile = nullptr;
     bool print = false;
@@ -142,37 +147,37 @@ private:
 
 };
 
-static TSLogger globalLogger;
+//static TSLogger *globalLogger;
 
 
 #define LOG_ERROR(...)\
-    if (globalLogger.logSev <= TSLogger::Severity::ERROR){\
+    if (TSLogger::globalLogger->logSev <= TSLogger::Severity::ERROR){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
-           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::ERROR,__FILE__,__LINE__);\
+           TSLogger::globalLogger->logMsg(strBuilder(__VA_ARGS__),TSLogger::ERROR,__FILE__,__LINE__);\
     }
 
 #define LOG_WARN(...)\
-    if (globalLogger.logSev <= TSLogger::Severity::WARN){\
+    if (TSLogger::globalLogger->logSev <= TSLogger::Severity::WARN){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
-           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::WARN,__FILE__,__LINE__);\
+           TSLogger::globalLogger->logMsg(strBuilder(__VA_ARGS__),TSLogger::WARN,__FILE__,__LINE__);\
     }
 
 #define LOG_INFO(...)\
-    if (globalLogger.logSev <= TSLogger::Severity::INFO){\
+    if (TSLogger::globalLogger->logSev <= TSLogger::Severity::INFO){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
-           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::INFO,__FILE__,__LINE__);\
+           TSLogger::globalLogger->logMsg(strBuilder(__VA_ARGS__),TSLogger::INFO,__FILE__,__LINE__);\
     }
 
 #define LOG_DEBUG(...)\
-    if (globalLogger.logSev <= TSLogger::Severity::DEBUG){\
+    if (TSLogger::globalLogger->logSev <= TSLogger::Severity::DEBUG){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
-           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::DEBUG,__FILE__,__LINE__);\
+           TSLogger::globalLogger->logMsg(strBuilder(__VA_ARGS__),TSLogger::DEBUG,__FILE__,__LINE__);\
     }
 
 #define LOG_TRACE(...)\
-    if (globalLogger.logSev <= TSLogger::Severity::TRACE){\
+    if (TSLogger::globalLogger->logSev <= TSLogger::Severity::TRACE){\
            std::string str1112 = strBuilder(__VA_ARGS__); \
-           globalLogger.logMsg(strBuilder(__VA_ARGS__),TSLogger::TRACE,__FILE__,__LINE__);\
+           TSLogger::globalLogger->logMsg(strBuilder(__VA_ARGS__),TSLogger::TRACE,__FILE__,__LINE__);\
     }
 
 #endif //TCP_SHMAFKA_LOGGER_H
