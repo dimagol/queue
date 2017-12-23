@@ -55,7 +55,7 @@ public:
         return bufferPool->getChunkedWithIntAndStr(POST_LIST_CHANELES_RES, channels);
     }
 
-    SocketProtoBuffer * buildListenRegistrationMsg(string &channel){
+    SocketProtoBuffer * buildListenRegistrationMsg(const string &channel){
         if(channel.size() > 16){
             LOG_ERROR("got to big channel name ", channel)
             return nullptr;

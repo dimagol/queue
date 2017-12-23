@@ -64,7 +64,6 @@ void Client::handle_read_hello(const boost::system::error_code &error) {
 }
 
 void Client::handle_read_len(const boost::system::error_code &error) {
-//    cout << "Client::handle_read_len\n";
     uint32_t len  = in_buff->get_msg_len();
     if(len > in_buff->len){
         cerr << "bad len " <<  in_buff->get_msg_len() << endl;
@@ -90,10 +89,9 @@ void Client::handle_body(const boost::system::error_code &error) {
         do_close();
         return;
     }
-
     concurentQueueFromServer.push(in_buff);
     in_buff =  BufferPool::bufferPool->get();
-
+//    BufferPool::bufferPool->releaseList(in_)
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in_buff->msg_len_buff, MSG_LEN_BUFF_LEN),
                             boost::bind(&Client::handle_read_len,
@@ -103,7 +101,6 @@ void Client::handle_body(const boost::system::error_code &error) {
 
 void Client::write(SocketProtoBuffer *buffer) {
     auto  b = buffer->get_msg_len();
-//    cout << "Client::write\n";
     boost::asio::async_write(socket_,
                              boost::asio::buffer(buffer->all_data,
                                                  buffer->get_msg_all_data_len()),
@@ -114,7 +111,6 @@ void Client::write(SocketProtoBuffer *buffer) {
 }
 
 void Client::handle_write(SocketProtoBuffer *out_buff, const boost::system::error_code &error) {
-//    cout << "Client::handle_write\n";
 
     BufferPool::bufferPool->release(out_buff);
     if(error != nullptr){

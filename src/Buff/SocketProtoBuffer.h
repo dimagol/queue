@@ -31,9 +31,45 @@ public:
     const uint32_t get_int(uint32_t offset) const {
         return ntohl(*((uint32_t * )(msg_data_buff + offset)));
     }
+    void print_hex_memory() {
+        int all_msg_len = get_msg_len() + 4;
+        int num_of_lines = all_msg_len / 16;
+        int res = all_msg_len % 16;
+        int index = 0;
+        cout << "buff len : " << all_msg_len << endl;
+        for (int i = 0 ; i < num_of_lines ; i++){
+                printf("%02x %02x %02x %02x "
+                       "%02x %02x %02x %02x "
+                       "%02x %02x %02x %02x "
+                       "%02x %02x %02x %02x         "
+                               "%c %0c %0c %0c "
+                               "%c %0c %0c %0c "
+                               "%c %0c %0c %0c "
+                               "%c %0c %0c %0c \n"
+                        , all_data[index], all_data[index+1],all_data[index+2],all_data[index+3]
+                        , all_data[index+4], all_data[index+5],all_data[index+6],all_data[index+7]
+                        , all_data[index+8], all_data[index+9],all_data[index+10],all_data[index+11]
+                        , all_data[index+12], all_data[index+13],all_data[index+14],all_data[index+15]
 
-    void print_buff() {
-        cout << "all_data " << " msg_data_buff: " << msg_data_buff << " len: " << get_msg_len() << endl;
+                        , (char)all_data[index], (char)all_data[index+1],(char)all_data[index+2],(char)all_data[index+3]
+                        , (char)all_data[index+4], (char)all_data[index+5],(char)all_data[index+6],(char)all_data[index+7]
+                        , (char)all_data[index+8], (char)all_data[index+9],(char)all_data[index+10],(char)all_data[index+11]
+                        , (char)all_data[index+12], (char)all_data[index+13],(char)all_data[index+14],(char)all_data[index+15]);
+                index+=16;
+        }
+
+        for (int i = 0 ; i < res ; i++){
+            printf("%02x ", all_data[index+i]);
+        }
+        for (int i = 0 ; i < 16-res ; i++){
+            printf("   ");
+
+        }
+        printf("       ");
+        for (int i = 0 ; i < res ; i++){
+            printf(" %c", (char)all_data[index+i]);
+        }
+        printf("\n");
     }
 
     bool set_by_str(string &s, uint32_t type){

@@ -13,7 +13,6 @@
 class MsgToEventProcessor {
 public:
     ProceededEvent processBuff(TcpServerIncomeMessage &incomeMessage){
-        cout << incomeMessage.getBuffer()->get_msg_len() <<endl;
         switch (incomeMessage.getBuffer()->get_int(CONSTS_MSG_TYPE_OFFSET)){
             case MsgType::POST_REGISTER:
                 return handleRegisterPost(incomeMessage);
@@ -55,12 +54,6 @@ private:
     }
     ProceededEvent handlePost(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        cout << buff->get_msg_len() << endl;
-        for (int i = 0 ; i < 40; i++){
-            cout << (int)buff->all_data[i] << " zzzz"<< endl;
-        }
-        cout << buff->get_int(CONSTS_POST_MSG_CHUNK_OFFSET) << endl;
-        cout << buff->get_int(CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET) << endl;
         return ProceededEvent(buff->get_string(CONSTS_POST_CHANEL_OFFSET),
                             MsgType::POST_POST,
                             buff,
@@ -95,20 +88,28 @@ private:
                             MsgType::LISTEN_DEREGISTER,
                             incomeMessage.getId());
     }
-    ProceededEvent handleDeregisterListenAll(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::LISTEN_DEREGISTER_ALL, incomeMessage.getId());
+    ProceededEvent handleDeregisterListenAll(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::LISTEN_DEREGISTER_ALL, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
     }
-    ProceededEvent handleDisconnectListen(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::LISTEN_DISCONNECT, incomeMessage.getId());
+    ProceededEvent handleDisconnectListen(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::LISTEN_DISCONNECT, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
     }
 
 
-    ProceededEvent handleListChanelsPost(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::POST_LIST_CHANELES_REQ, incomeMessage.getId());
+    ProceededEvent handleListChanelsPost(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::POST_LIST_CHANELES_REQ, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
     }
 
-    ProceededEvent handleListChanelsListen(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::LISTEN_LIST_CHANELES_REQ, incomeMessage.getId());
+    ProceededEvent handleListChanelsListen(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::LISTEN_LIST_CHANELES_REQ, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
     }
 };
 

@@ -52,7 +52,7 @@ public:
         return ret;
     }
 
-    const string& getChannelListStr(){
+    const string getChannelListStr(){
         std::stringstream ss;
         for(auto channel : channelMap){
                 ss << channel.first << endl;

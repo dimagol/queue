@@ -104,7 +104,6 @@ void TcpServerConnection::handle_read_len(const boost::system::error_code &error
     }
 
     len_in = in->get_msg_len();
-    cout << len_in << " xxxxx " << endl;
     if(__glibc_unlikely(len_in > in->len || (errorCode != nullptr))){
         LOG_WARN("got to big msg or error");
         serverHandler->deregister_client(id);
@@ -124,12 +123,17 @@ void TcpServerConnection::handle_read_data(const boost::system::error_code &erro
         serverHandler->deregister_client(id);
         return;
     }
-    cout << in->get_msg_len() << " zzzzzzcccz"<< endl;
+
+    if (__glibc_unlikely(len_in != size)){
+        LOG_WARN("got bad size : " ,len_in ," ", size);
+        serverHandler->deregister_client(id);
+        return;
+    }
     serverHandler->concurentQueueFromClients.push(make_shared<TcpServerIncomeMessage>(in,id));
 
     in = BufferPool::bufferPool->get();
     boost::asio::async_read(socket_,
-                            boost::asio::buffer(in->msg_data_buff, MSG_LEN_BUFF_LEN),
+                            boost::asio::buffer(in->all_data, MSG_LEN_BUFF_LEN),
                             boost::bind(&TcpServerConnection::handle_read_len,
                                         this,
                                         boost::asio::placeholders::error,

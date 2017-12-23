@@ -21,7 +21,11 @@ TcpServer::TcpServer(uint16_t port)
 
 
 shared_ptr<TcpServerIncomeMessage> TcpServer::recieve() {
-    return serverHandler.concurentQueueFromClients.try_pop();
+    auto msg = serverHandler.concurentQueueFromClients.try_pop();
+    if(msg != nullptr){
+        return msg;
+    }
+    return nullptr;
 }
 
 void TcpServer::run() {
@@ -29,7 +33,7 @@ void TcpServer::run() {
     while (shouldRun) {
         acceptor_.get_io_service().poll();
         auto outMsg = serverHandler.concurentQueueToClient.try_pop();
-        while (outMsg != nullptr){
+        if (outMsg != nullptr){
             switch (outMsg->getType()){
                 case TcpServerOutcomeMessage::DISCONNECT:
                     sendDisconnect(outMsg);
@@ -39,7 +43,6 @@ void TcpServer::run() {
                 default:
                     LOG_ERROR("unsapported type ",outMsg->getType());
             }
-            sendNormalMsg(outMsg);
         }
 
     }
@@ -69,7 +72,7 @@ void TcpServer::sendNormalMsg(const shared_ptr<TcpServerOutcomeMessage> &outMsg)
             }
     auto buff = outMsg->getBuffer();
     if(refCount == 0){
-                BufferPool::bufferPool->releaseList(buff);
+                BufferPool::bufferPool->release(buff);
             } else{
                 buff->setRefCountList(refCount);
             }

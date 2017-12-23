@@ -6,7 +6,6 @@
 #include "../Logging/TSLogger.h"
 #include "../Msg/MsgConsts.h"
 
-
 BufferPool* BufferPool::bufferPool = BufferPool::create(1024, 65535);
 
 
@@ -22,24 +21,20 @@ BufferPool* BufferPool::create(uint32_t total, uint32_t bufferLen){
 
 SocketProtoBuffer *BufferPool::get() {
     lock.lock();
+
     if (bufferVector.empty()){
         lock.unlock();
         return nullptr;
     }
+
     SocketProtoBuffer * ret = bufferVector.back();
     bufferVector.pop_back();
+//    cout << "get size " << bufferVector.size() << " got "<< ret << endl;
     lock.unlock();
     return ret;
 }
 
 void BufferPool::release(SocketProtoBuffer * buffer) {
-    buffer->reset();
-    lock.lock();
-    bufferVector.push_back(buffer);
-    lock.unlock();
-}
-
-void BufferPool::releaseList(SocketProtoBuffer *buffer) {
     lock.lock();
     auto next = buffer;
     while (next != nullptr){
@@ -48,6 +43,7 @@ void BufferPool::releaseList(SocketProtoBuffer *buffer) {
         tmp->reset();
         bufferVector.push_back(tmp);
     }
+//    cout << "released size " << bufferVector.size() << " released "<< buffer << endl;
     lock.unlock();
 }
 
@@ -91,19 +87,14 @@ SocketProtoBuffer *BufferPool::getChunkedWithIntAndChannelData(uint32_t type,
     uint32_t dataOffset = 0;
     for(int i = 0; i < numOfBuffers ; i++){
         tmp->append_int(type,CONSTS_MSG_TYPE_OFFSET);
-        cout << tmp->get_msg_len() << endl;
         tmp->append_data(channel,channelLen,CONSTS_POST_CHANEL_OFFSET);
-        cout << tmp->get_msg_len() << endl;
-        tmp->append_int(numOfBuffers,CONSTS_POST_MSG_CHUNK_OFFSET);
-        cout << tmp->get_msg_len() << endl;
+        tmp->append_int(chunkNumber,CONSTS_POST_MSG_CHUNK_OFFSET);
         chunkNumber++;
-        tmp->append_int(chunkNumber,CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET);
-        cout << tmp->get_msg_len() << endl;
+        tmp->append_int(numOfBuffers,CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET);
         if(i == (numOfBuffers -1) && dataLen % dataLenPerBuffer != 0){
             dataLenPerBuffer = dataLen % dataLenPerBuffer;
         }
         tmp->append_data(data + dataOffset, dataLenPerBuffer,CONSTS_POST_MSG_DATA_OFFSTE);
-        cout << tmp->get_msg_len() << endl;
         dataOffset+=dataLenPerBuffer;
         tmp = tmp->nextBuffer;
     }

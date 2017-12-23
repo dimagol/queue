@@ -25,7 +25,6 @@ public:
     SocketProtoBuffer* getWithIntAndStr(uint32_t type, const string &str);
     SocketProtoBuffer* getWithInt(uint32_t type);
     void release(SocketProtoBuffer *);
-    void releaseList(SocketProtoBuffer *buffer);
     SocketProtoBuffer *getChunkedWithIntAndData(uint32_t type, const uint8_t *str, uint32_t len);
     SocketProtoBuffer *getChunkedWithIntAndStr(uint32_t type, string &str);
 

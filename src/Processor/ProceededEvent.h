@@ -66,7 +66,7 @@ public:
         return num_of_chunks;
     }
     inline void releaseBufferList(){
-        BufferPool::bufferPool->releaseList(socketProtoBuffer);
+        BufferPool::bufferPool->release(socketProtoBuffer);
     }
 private:
     const string channelName;

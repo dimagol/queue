@@ -110,7 +110,6 @@ public:
 
 private:
     void handlePostRegister(ProceededEvent &proceededMsg){
-//        cout << proceededMsg.getSocketProtoBuffer()->get_msg_len() << endl;
         if(userPostingMap.find(proceededMsg.getSender_id()) != userPostingMap.end()){
             LOG_WARN("already exists " , proceededMsg.getSender_id());
         } else{
@@ -121,7 +120,6 @@ private:
     }
     void handlePost(ProceededEvent &proceededMsg){
         haveNew = false;
-//        cout << proceededMsg.getSocketProtoBuffer()->get_msg_len() << endl;
         auto buffCont = userPostingMap.find(proceededMsg.getSender_id());
         if(buffCont == userPostingMap.end()){
             LOG_ERROR("reorder event");
@@ -132,6 +130,8 @@ private:
             LOG_ERROR("cant append");
             return;
         }
+        shared_ptr<FullMsgBuffersContainer>  fff = buffCont->second;
+        auto zzz  = fff.get();
         if(buffCont->second->isDone()){
             buff_done.second = buffCont->second;
             buff_done.first = buffCont->first;

@@ -14,7 +14,6 @@ void Worker::run() {
         auto prodMsg = producerServer->recieve();
 
         if(prodMsg != nullptr){
-            cout << prodMsg->getBuffer()->get_msg_len() << " dd" << endl;
             auto event = processor.processBuff(*prodMsg);
             if(event.getType() < MsgType::LISTEN_MSG_START){
                 handlePostMsg(event);
@@ -32,7 +31,6 @@ void Worker::run() {
             } else{
                 handleListenMsg(event);
             }
-        } else {
         }
     }
     LOG_INFO("worker done")
