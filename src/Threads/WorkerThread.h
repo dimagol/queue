@@ -24,6 +24,10 @@ public:
         workerThread = new thread(&Worker::run, worker);
     }
 
+    void join(){
+        workerThread->join();
+    }
+
     virtual ~WorkerThread() {
         LOG_INFO("worker end");
         worker->setShouldRun(false);

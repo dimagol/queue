@@ -23,12 +23,16 @@ public:
         serverThread = new thread(&TcpServer::run, server);
     }
 
+    void join(){
+        serverThread->join();
+    }
     virtual ~ServerThread() {
         LOG_INFO("ServerThread end")
         server->setShouldRun(false);
         serverThread->join();
         delete serverThread;
     }
+
 
 private:
     TcpServer *server = nullptr;

@@ -6,7 +6,7 @@
 #include "../Logging/TSLogger.h"
 #include "../Msg/MsgConsts.h"
 
-BufferPool* BufferPool::bufferPool = BufferPool::create(1024, 65535);
+BufferPool* BufferPool::bufferPool = BufferPool::create(1024*64, 1024);
 
 
 BufferPool::BufferPool(uint32_t total, uint32_t bufferLen) : total(total), bufferLen(bufferLen) {
@@ -19,33 +19,7 @@ BufferPool* BufferPool::create(uint32_t total, uint32_t bufferLen){
     return new BufferPool(total, bufferLen);
 }
 
-SocketProtoBuffer *BufferPool::get() {
-    lock.lock();
 
-    if (bufferVector.empty()){
-        lock.unlock();
-        return nullptr;
-    }
-
-    SocketProtoBuffer * ret = bufferVector.back();
-    bufferVector.pop_back();
-//    cout << "get size " << bufferVector.size() << " got "<< ret << endl;
-    lock.unlock();
-    return ret;
-}
-
-void BufferPool::release(SocketProtoBuffer * buffer) {
-    lock.lock();
-    auto next = buffer;
-    while (next != nullptr){
-        auto tmp = next;
-        next = next->nextBuffer;
-        tmp->reset();
-        bufferVector.push_back(tmp);
-    }
-//    cout << "released size " << bufferVector.size() << " released "<< buffer << endl;
-    lock.unlock();
-}
 
 
 
@@ -136,6 +110,7 @@ SocketProtoBuffer *BufferPool::getLinked(uint32_t num) {
     }
     SocketProtoBuffer * ret = bufferVector.back();
     SocketProtoBuffer * tail = ret;
+//    cout << "get vec size " << bufferVector.size() << " instanse " << ret << endl;
     bufferVector.pop_back();
     for(int i = 0; i < num -1; i++){
         tail->nextBuffer = bufferVector.back();
@@ -144,6 +119,41 @@ SocketProtoBuffer *BufferPool::getLinked(uint32_t num) {
     }
     lock.unlock();
     return ret;
+}
+
+SocketProtoBuffer *BufferPool::get() {
+    lock.lock();
+
+    if (bufferVector.empty()){
+        lock.unlock();
+        LOG_ERROR("no buffers");
+        return nullptr;
+    }
+
+    SocketProtoBuffer * ret = bufferVector.back();
+    bufferVector.pop_back();
+    lock.unlock();
+    return ret;
+}
+
+void BufferPool::release(SocketProtoBuffer * buffer) {
+    lock.lock();
+    auto next = buffer;
+    while (next != nullptr){
+        auto tmp = next;
+        next = next->nextBuffer;
+        tmp->reset();
+//        cout << "rel vec size " << bufferVector.size() << "instanse " << tmp <<endl;
+        bufferVector.push_back(tmp);
+    }
+    lock.unlock();
+}
+
+void BufferPool::releaseOne(SocketProtoBuffer * buffer) {
+    lock.lock();
+    buffer->reset();
+    bufferVector.push_back(buffer);
+    lock.unlock();
 }
 
 SocketProtoBuffer *BufferPool::getWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len) {

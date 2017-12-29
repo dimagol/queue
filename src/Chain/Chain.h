@@ -14,8 +14,8 @@ public:
     Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder) :
             consumerPort(consumerPort),
             producerPort(producerPort),
-            consumerTcpServer(consumerPort),
-            producerTcpServer(producerPort),
+            consumerTcpServer(consumerPort,builder),
+            producerTcpServer(producerPort,builder),
             builder(builder)
     {
         worker.setShouldRun(true);
@@ -33,6 +33,12 @@ public:
         consumerServerThread.run();
         producerServerThread.run();
         workerThread.run();
+    }
+
+    void join(){
+        consumerServerThread.join();
+        producerServerThread.join();
+        workerThread.join();
     }
 
     void stop(){

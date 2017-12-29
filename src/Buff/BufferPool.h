@@ -25,6 +25,7 @@ public:
     SocketProtoBuffer* getWithIntAndStr(uint32_t type, const string &str);
     SocketProtoBuffer* getWithInt(uint32_t type);
     void release(SocketProtoBuffer *);
+    void releaseOne(SocketProtoBuffer *buffer);
     SocketProtoBuffer *getChunkedWithIntAndData(uint32_t type, const uint8_t *str, uint32_t len);
     SocketProtoBuffer *getChunkedWithIntAndStr(uint32_t type, string &str);
 
@@ -41,6 +42,8 @@ private:
     vector<SocketProtoBuffer *> bufferVector;
     uint32_t total;
     uint32_t bufferLen;
+
+
 };
 
 #endif //TCP_SHMAFKA_BUFFERPOLL_H

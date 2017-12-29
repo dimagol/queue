@@ -7,15 +7,16 @@
 
 enum MsgType {
     UNDEFINED = -1,
+    DISCONNECT_FROM_SERVER = 1,
 
-    POST_MSG_START_ =           0,
-    POST_REGISTER =             1,
-    POST_POST =                 2,
-    POST_DEREGISTER =           3,
-    POST_DEREGISTER_ALL =       4,
-    POST_DISCONNECT =           5,
-    POST_LIST_CHANELES_REQ =    6,
-    POST_LIST_CHANELES_RES =    7,
+    POST_MSG_START_ =           500,
+    POST_REGISTER =             501,
+    POST_POST =                 502,
+    POST_DEREGISTER =           503,
+    POST_DEREGISTER_ALL =       504,
+    POST_DISCONNECT =           505,
+    POST_LIST_CHANELES_REQ =    506,
+    POST_LIST_CHANELES_RES =    507,
 
     LISTEN_MSG_START=           1000,
     LISTEN_REGISTER =           1001,

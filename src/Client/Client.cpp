@@ -6,15 +6,16 @@
 
 #include "Client.h"
 #include "../DefinedMessages.h"
+#include "../Logging/TSLogger.h"
 
-Client::Client(boost::asio::io_service &io_service, string &host, string &port)
+Client::Client(boost::asio::io_service &io_service, string &host, uint16_t port)
         : io_service_(io_service),
           socket_(io_service),
           port(port),
           host(host)
 {
     tcp::resolver resolver(io_service);
-    tcp::resolver::query query(host, port);
+    tcp::resolver::query query(host,to_string((int)port));
     epIterator = resolver.resolve(query);
     in_buff = BufferPool::bufferPool->get();
 
@@ -29,9 +30,11 @@ void Client::handle_connect(const boost::system::error_code &error) {
     {
         set_no_deley();
         boost::asio::async_read(socket_,
-                                boost::asio::buffer(in_buff->all_data, DefinedMessages::hello_msg->get_msg_all_data_len()),
+                                boost::asio::buffer(in_buff->msg_complete_buff, DefinedMessages::hello_msg->get_msg_all_data_len()),
                                 boost::bind(&Client::handle_read_hello, this,
                                             boost::asio::placeholders::error));
+    } else{
+        LOG_ERROR("unable to connect");
     }
 }
 
@@ -91,7 +94,6 @@ void Client::handle_body(const boost::system::error_code &error) {
     }
     concurentQueueFromServer.push(in_buff);
     in_buff =  BufferPool::bufferPool->get();
-//    BufferPool::bufferPool->releaseList(in_)
     boost::asio::async_read(socket_,
                             boost::asio::buffer(in_buff->msg_len_buff, MSG_LEN_BUFF_LEN),
                             boost::bind(&Client::handle_read_len,
@@ -99,22 +101,27 @@ void Client::handle_body(const boost::system::error_code &error) {
                                         boost::asio::placeholders::error));
 }
 
-void Client::write(SocketProtoBuffer *buffer) {
-    auto  b = buffer->get_msg_len();
+void Client::write(shared_ptr<ClientBufferConteiner> buffer) {
+    cout << "wrote " << endl;
     boost::asio::async_write(socket_,
-                             boost::asio::buffer(buffer->all_data,
-                                                 buffer->get_msg_all_data_len()),
+                             boost::asio::buffer(buffer->current->msg_complete_buff,
+                                                 buffer->current->get_msg_all_data_len()),
                              boost::bind(&Client::handle_write,
                                          this,
                                          buffer,
                                          boost::asio::placeholders::error));
 }
 
-void Client::handle_write(SocketProtoBuffer *out_buff, const boost::system::error_code &error) {
-
-    BufferPool::bufferPool->release(out_buff);
+void Client::handle_write(shared_ptr<ClientBufferConteiner> out_buff, const boost::system::error_code &error) {
     if(error != nullptr){
         cerr << "got error " << error << endl;
+        BufferPool::bufferPool->release(out_buff->first);
+    }
+    if (out_buff->current != out_buff->last){
+        out_buff->current = out_buff->current->nextBuffer;
+        write(out_buff);
+    } else{
+        BufferPool::bufferPool->release(out_buff->first);
     }
 }
 

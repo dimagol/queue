@@ -26,7 +26,7 @@ public:
             head->set_int(MsgType::LISTEN_POST,0);
             tail = head;
             totalLen = proceededMsg.getNumOfChunks();
-
+            return true;
         }
         if(__glibc_unlikely(proceededMsg.getChunk() != currentLen)){
             LOG_ERROR("unable process buffer, chunk:",proceededMsg.getChunk()," currentLen:", currentLen);
@@ -130,12 +130,15 @@ private:
             LOG_ERROR("cant append");
             return;
         }
-        shared_ptr<FullMsgBuffersContainer>  fff = buffCont->second;
-        auto zzz  = fff.get();
+//        shared_ptr<FullMsgBuffersContainer>  fff = buffCont->second;
         if(buffCont->second->isDone()){
             buff_done.second = buffCont->second;
             buff_done.first = buffCont->first;
-            userPostingMap.erase(buffCont);
+            buffCont->second = make_shared<FullMsgBuffersContainer>();
+//            userPostingMap.insert(
+//                    make_pair<uint32_t , shared_ptr<FullMsgBuffersContainer>>(
+//                    proceededMsg.getSender_id(),
+//                    make_shared<FullMsgBuffersContainer>()));
             haveNew = true;
             return;
         }

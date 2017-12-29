@@ -14,22 +14,23 @@ void Worker::run() {
         auto prodMsg = producerServer->recieve();
 
         if(prodMsg != nullptr){
-            auto event = processor.processBuff(*prodMsg);
-            if(event.getType() < MsgType::LISTEN_MSG_START){
+         auto event = processor.getEventByBuff(*prodMsg);
+            if(event.getType() != MsgType::UNDEFINED){
                 handlePostMsg(event);
-            } else{
-                LOG_ERROR("wrong msg type")
+            } else {
+                LOG_ERROR("got undefined msg")
             }
-        } else {
+
+
         }
 
         auto consMsg = consumerServer->recieve();
         if(consMsg != nullptr){
-            auto event = processor.processBuff(*consMsg);
-            if(event.getType() < MsgType::LISTEN_MSG_START){
-                LOG_ERROR("wrong msg type")
-            } else{
+            auto event = processor.getEventByBuff(*consMsg);
+            if(event.getType() != MsgType::UNDEFINED){
                 handleListenMsg(event);
+            } else {
+                LOG_ERROR("got undefined msg")
             }
         }
     }
@@ -50,6 +51,7 @@ void Worker::handlePostMsg(ProceededEvent &event) const {
         case POST_DEREGISTER_ALL:
             handlePostDeregisterAll(event);
             break;
+        case DISCONNECT_FROM_SERVER:
         case POST_DISCONNECT:
             handlePostDisconnect(event);
             break;
@@ -57,7 +59,10 @@ void Worker::handlePostMsg(ProceededEvent &event) const {
             handlePostListChannels(event);
             break;
         default:
-            LOG_ERROR("");
+            LOG_ERROR("got unsupported msg of type ",event.getType());
+            if(event.getSocketProtoBuffer() != nullptr){
+                BufferPool::bufferPool->release(event.getSocketProtoBuffer());
+            }
     }
 }
 
@@ -72,6 +77,7 @@ void Worker::handleListenMsg(ProceededEvent &event) const {
         case LISTEN_DEREGISTER_ALL:
             handleListenDeregisterAll(event);
             break;
+        case DISCONNECT_FROM_SERVER:
         case LISTEN_DISCONNECT:
             handleListenDisconnect(event);
             break;
@@ -79,7 +85,10 @@ void Worker::handleListenMsg(ProceededEvent &event) const {
             handleListenListChannels(event);
             break;
         default:
-            LOG_ERROR("");
+            LOG_ERROR("got unsupported msg of type ",event.getType());
+            if(event.getSocketProtoBuffer() != nullptr){
+                BufferPool::bufferPool->release(event.getSocketProtoBuffer());
+            }
     }
 }
 
@@ -90,13 +99,15 @@ void Worker::handlePostRegister(ProceededEvent &event) const {
         channel = channelDb->createChannel(event.getChannelName());
     }
     channel->feed(event);
-    event.releaseBufferList();
 }
 
 void Worker::handlePost(ProceededEvent &event) const {
     auto channel = channelDb->getChannel(event.getChannelName());
     if (channel == nullptr) {
         LOG_ERROR("channel not exist ", event.getChannelName());
+        if(event.getSocketProtoBuffer() != nullptr){
+            BufferPool::bufferPool->release(event.getSocketProtoBuffer());
+        }
     } else {
         channel->feed(event);
         if (channel->haveNewData()) {
@@ -114,7 +125,6 @@ void Worker::handlePostDeregister(ProceededEvent &event) const {
     if (channel != nullptr) {
         channel->feed(event);
     }
-    event.releaseBufferList();
 }
 
 void Worker::handlePostDeregisterAll(ProceededEvent &event) const {
@@ -122,12 +132,18 @@ void Worker::handlePostDeregisterAll(ProceededEvent &event) const {
     for (auto channel : *channelVec) {
         channel->feed(event);
     }
-    event.releaseBufferList();
 }
 
+
 void Worker::handlePostDisconnect(ProceededEvent &event) const {
-    handlePostDeregisterAll(event);
-    producerServer->disconnectClient(event.getSender_id());
+    if (event.getType() == DISCONNECT_FROM_SERVER){
+        ProceededEvent event1(POST_DISCONNECT,event.getSender_id());
+        handlePostDeregisterAll(event1);
+    } else{
+        handlePostDeregisterAll(event);
+        producerServer->disconnectClient(event.getSender_id());
+    }
+
 }
 
 void Worker::handlePostListChannels(ProceededEvent &event) const {
@@ -138,7 +154,6 @@ void Worker::handlePostListChannels(ProceededEvent &event) const {
     } else{
         LOG_ERROR("got null buff");
     }
-    event.releaseBufferList();
 }
 
 // listen handlers
@@ -148,7 +163,6 @@ void Worker::handleListenRegister(ProceededEvent &event) const {
         channel = channelDb->createChannel(event.getChannelName());
     }
     channel->feed(event);
-    event.releaseBufferList();
 }
 
 void Worker::handleListenDeregister(ProceededEvent &event) const {
@@ -156,7 +170,6 @@ void Worker::handleListenDeregister(ProceededEvent &event) const {
     if (channel != nullptr) {
         channel->feed(event);
     }
-    event.releaseBufferList();
 }
 
 void Worker::handleListenDeregisterAll(ProceededEvent &event) const {
@@ -164,12 +177,17 @@ void Worker::handleListenDeregisterAll(ProceededEvent &event) const {
     for (const auto &channel : *channelVec) {
         channel->feed(event);
     }
-    event.releaseBufferList();
 }
 
 void Worker::handleListenDisconnect(ProceededEvent &event) const {
-    handleListenDeregisterAll(event);
-    consumerServer->disconnectClient(event.getSender_id());
+    if (event.getType() == DISCONNECT_FROM_SERVER){
+        ProceededEvent event1(LISTEN_DISCONNECT,event.getSender_id());
+        handleListenDeregisterAll(event1);
+    } else {
+        handleListenDeregisterAll(event);
+        consumerServer->disconnectClient(event.getSender_id());
+    }
+
 }
 
 void Worker::handleListenListChannels(ProceededEvent &event) const {
@@ -180,7 +198,6 @@ void Worker::handleListenListChannels(ProceededEvent &event) const {
     } else{
         LOG_ERROR("got null buff");
     }
-    event.releaseBufferList();
 }
 
 // setters

@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <unordered_map>
-#include <boost/enable_shared_from_this.hpp>
+//#include <boost/enable_shared_from_this.hpp>
 #include <utility>
 
 #include "../DefinedMessages.h"
@@ -20,6 +20,7 @@
 #include "TcpServerConnection.h"
 #include "TcpServerIncomeMessage.h"
 #include "TcpServerOutcomeMessage.h"
+#include "../Msg/MsgBuilder.h"
 
 
 using namespace boost::asio::ip;
@@ -29,24 +30,25 @@ using namespace std;
 
 class ServerHandler{
 public:
-    unordered_map<uint32_t , TcpServerConnection::TcpServerConnectionPointer> client_map;
+    unordered_map<uint32_t , std::shared_ptr<TcpServerConnection>> client_map;
 
 
-    void register_client(TcpServerConnection::TcpServerConnectionPointer conn, uint32_t id);
+    void register_client(std::shared_ptr<TcpServerConnection> conn, uint32_t id);
     void deregister_client(uint32_t id);
 
-    ConcurentQueue<shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
-    ConcurentQueue<shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
+    ConcurentQueue<std::shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
+    ConcurentQueue<std::shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
+    MsgBuilder * builder;
 };
 
 class TcpServer
 {
 public:
-    explicit TcpServer(uint16_t port);
+    explicit TcpServer(uint16_t port, MsgBuilder * builder);
 
-    void send(const shared_ptr<TcpServerOutcomeMessage> &outMsg);
+    void send(const std::shared_ptr<TcpServerOutcomeMessage> &outMsg);
 
-    shared_ptr<TcpServerIncomeMessage> recieve();
+    std::shared_ptr<TcpServerIncomeMessage> recieve();
 
     void run();
 
@@ -58,7 +60,7 @@ private:
 
     void start_accept();
 
-    void handle_accept(TcpServerConnection::TcpServerConnectionPointer  new_connection,
+    void handle_accept(std::shared_ptr<TcpServerConnection>  new_connection,
                        const boost::system::error_code& error);
 
 
@@ -72,9 +74,9 @@ private:
 
 
 
-    void sendNormalMsg(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const;
+    void sendNormalMsg(std::shared_ptr<TcpServerOutcomeMessage> outMsg);
 
-    void sendDisconnect(const shared_ptr<TcpServerOutcomeMessage> &outMsg) const;
+    void sendDisconnect(std::shared_ptr<TcpServerOutcomeMessage> outMsg);
 };
 
 #endif //TCP_SHMAFKA_SERVER_H

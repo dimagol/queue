@@ -12,7 +12,7 @@
 
 class MsgToEventProcessor {
 public:
-    ProceededEvent processBuff(TcpServerIncomeMessage &incomeMessage){
+    ProceededEvent getEventByBuff(TcpServerIncomeMessage &incomeMessage){
         switch (incomeMessage.getBuffer()->get_int(CONSTS_MSG_TYPE_OFFSET)){
             case MsgType::POST_REGISTER:
                 return handleRegisterPost(incomeMessage);
@@ -22,10 +22,11 @@ public:
                 return handleDeregisterPost(incomeMessage);
             case MsgType::POST_DEREGISTER_ALL:
                 return handleDeregisterAllPost(incomeMessage);
-            case MsgType::POST_DISCONNECT:
-                return handleDisconnectPost(incomeMessage);
             case MsgType::POST_LIST_CHANELES_REQ:
                 return handleListChanelsPost(incomeMessage);
+
+            case MsgType::POST_DISCONNECT:
+                return handleDisconectPost(incomeMessage);
 
             case MsgType::LISTEN_REGISTER:
                 return handleRegisterListen(incomeMessage);
@@ -33,10 +34,14 @@ public:
                 return handleDeregisterListen(incomeMessage);
             case MsgType::LISTEN_DEREGISTER_ALL:
                 return handleDeregisterListenAll(incomeMessage);
-            case MsgType::LISTEN_DISCONNECT:
-                return handleDisconnectListen(incomeMessage);
             case MsgType::LISTEN_LIST_CHANELES_REQ:
                 return handleListChanelsListen(incomeMessage);
+            case LISTEN_DISCONNECT:
+                return handleDisconectListen(incomeMessage);
+
+
+            case MsgType::DISCONNECT_FROM_SERVER:
+                return handleDisconnect(incomeMessage);
 
             default:
                 return ProceededEvent(MsgType::UNDEFINED,incomeMessage.getId());
@@ -47,54 +52,64 @@ public:
 private:
     ProceededEvent handleRegisterPost(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        return ProceededEvent(buff->get_string(CONSTS_POST_REGISTER_CHANEL_OFFSET),
+        auto ret = ProceededEvent(buff->get_string(CONSTS_POST_REGISTER_CHANEL_OFFSET),
                             MsgType::POST_REGISTER,
                             incomeMessage.getId());
+        BufferPool::bufferPool->release(buff);
+        return ret;
+
+
 
     }
     ProceededEvent handlePost(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        return ProceededEvent(buff->get_string(CONSTS_POST_CHANEL_OFFSET),
+        auto ret = ProceededEvent(buff->get_string(CONSTS_POST_CHANEL_OFFSET),
                             MsgType::POST_POST,
                             buff,
                             buff->get_int(CONSTS_POST_MSG_CHUNK_OFFSET),
                             buff->get_int(CONSTS_POST_MSG_NUM_OF_CHUNKS_OFFSET),
                             incomeMessage.getId());
+        return ret;
 
     }
     ProceededEvent handleDeregisterPost(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        return ProceededEvent(buff->get_string(CONSTS_POST_DEREGISTER_CHANEL_OFFSET),
+        auto ret = ProceededEvent(buff->get_string(CONSTS_POST_DEREGISTER_CHANEL_OFFSET),
                             MsgType::POST_DEREGISTER,
                             incomeMessage.getId());
+        BufferPool::bufferPool->release(buff);
+        return ret;
 
     }
-    ProceededEvent handleDeregisterAllPost(const TcpServerIncomeMessage &incomeMessage){
+    ProceededEvent handleDeregisterAllPost(TcpServerIncomeMessage &incomeMessage){
+        auto buff = incomeMessage.getBuffer();
+        BufferPool::bufferPool->release(buff);
         return ProceededEvent(MsgType::POST_DEREGISTER_ALL, incomeMessage.getId());
-    }
-    ProceededEvent handleDisconnectPost(const TcpServerIncomeMessage &incomeMessage){
-        return ProceededEvent(MsgType::POST_DISCONNECT, incomeMessage.getId());
     }
 
     ProceededEvent handleRegisterListen(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        return ProceededEvent(buff->get_string(CONSTS_LISTEN_REGISTER_CHANEL_OFFSET),
+        auto ret = ProceededEvent(buff->get_string(CONSTS_LISTEN_REGISTER_CHANEL_OFFSET),
                             MsgType::LISTEN_REGISTER,
                             incomeMessage.getId());
+        BufferPool::bufferPool->release(buff);
+        return ret;
     }
     ProceededEvent handleDeregisterListen(TcpServerIncomeMessage &incomeMessage){
         auto buff = incomeMessage.getBuffer();
-        return ProceededEvent(buff->get_string(CONSTS_LISTEN_DEREGISTER_CHANEL_OFFSET),
+        auto ret = ProceededEvent(buff->get_string(CONSTS_LISTEN_DEREGISTER_CHANEL_OFFSET),
                             MsgType::LISTEN_DEREGISTER,
                             incomeMessage.getId());
+        BufferPool::bufferPool->release(buff);
+        return ret;
     }
     ProceededEvent handleDeregisterListenAll(TcpServerIncomeMessage &incomeMessage){
         auto ret =  ProceededEvent(MsgType::LISTEN_DEREGISTER_ALL, incomeMessage.getId());
         BufferPool::bufferPool->release(incomeMessage.getBuffer());
         return ret;
     }
-    ProceededEvent handleDisconnectListen(TcpServerIncomeMessage &incomeMessage){
-        auto ret =  ProceededEvent(MsgType::LISTEN_DISCONNECT, incomeMessage.getId());
+    ProceededEvent handleDisconnect(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::DISCONNECT_FROM_SERVER, incomeMessage.getId());
         BufferPool::bufferPool->release(incomeMessage.getBuffer());
         return ret;
     }
@@ -108,6 +123,18 @@ private:
 
     ProceededEvent handleListChanelsListen(TcpServerIncomeMessage &incomeMessage){
         auto ret =  ProceededEvent(MsgType::LISTEN_LIST_CHANELES_REQ, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
+    }
+
+    ProceededEvent handleDisconectPost(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::POST_DISCONNECT, incomeMessage.getId());
+        BufferPool::bufferPool->release(incomeMessage.getBuffer());
+        return ret;
+    }
+
+    ProceededEvent handleDisconectListen(TcpServerIncomeMessage &incomeMessage){
+        auto ret =  ProceededEvent(MsgType::LISTEN_DISCONNECT, incomeMessage.getId());
         BufferPool::bufferPool->release(incomeMessage.getBuffer());
         return ret;
     }

@@ -42,9 +42,6 @@ public:
         return bufferPool->getWithInt(POST_DEREGISTER_ALL);
     }
 
-    SocketProtoBuffer * buildPostDisconnectMsg(){
-        return bufferPool->getWithInt(POST_DISCONNECT);
-    }
 
     SocketProtoBuffer * buildPostListChannelsReqMsg() {
         return bufferPool->getWithInt(POST_LIST_CHANELES_REQ);
@@ -83,10 +80,6 @@ public:
         return bufferPool->getWithInt(LISTEN_DEREGISTER_ALL);
     }
 
-    SocketProtoBuffer * buildListenDisconnectMsg(){
-        return bufferPool->getWithInt(LISTEN_DISCONNECT);
-    }
-
     SocketProtoBuffer * buildListenListChannelsReqMsg() {
         return bufferPool->getWithInt(LISTEN_LIST_CHANELES_REQ);
     }
@@ -95,6 +88,16 @@ public:
         return bufferPool->getChunkedWithIntAndStr(LISTEN_LIST_CHANELES_RES, channels);
     }
 
+    SocketProtoBuffer * buildDisconnectMsg(){
+        return bufferPool->getWithInt(DISCONNECT_FROM_SERVER);
+    }
+
+    SocketProtoBuffer * buildPostDisconnectMsg(){
+        return bufferPool->getWithInt(POST_DISCONNECT);
+    }
+    SocketProtoBuffer * buildListenDisconnectMsg(){
+        return bufferPool->getWithInt(LISTEN_DISCONNECT);
+    }
 
 
 private:

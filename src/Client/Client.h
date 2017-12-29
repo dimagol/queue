@@ -28,17 +28,31 @@
 using namespace std;
 using boost::asio::ip::tcp;
 
+class ClientBufferConteiner{
+public:
+    ClientBufferConteiner(SocketProtoBuffer *first) : first(first), current(first) {
+        SocketProtoBuffer *next = first;
+        while(next != nullptr){
+            last = next;
+            next = next->nextBuffer;
+        }
+    }
+
+    SocketProtoBuffer* first;
+    SocketProtoBuffer* last;
+    SocketProtoBuffer* current;
+};
 class Client
 {
 public:
-    Client(boost::asio::io_service& io_service, string &host, string &port);
+    Client(boost::asio::io_service& io_service, string &host, uint16_t port);
     std::thread spawn();
     void setShouldRun(volatile bool shouldRun);
 
     void run(){
         while (shouldRun){
             io_service_.poll();
-            SocketProtoBuffer * buff = concurentQueueToServer.try_pop();
+            shared_ptr<ClientBufferConteiner> buff = concurentQueueToServer.try_pop();
             if(buff != nullptr){
                 write(buff);
             }
@@ -47,7 +61,7 @@ public:
     }
 
     void send(SocketProtoBuffer* buffer){
-        concurentQueueToServer.push(buffer);
+        concurentQueueToServer.push(make_shared<ClientBufferConteiner>(ClientBufferConteiner(buffer)));
     }
 
     SocketProtoBuffer * recieve(){
@@ -64,9 +78,9 @@ private:
 
     void handle_body(const boost::system::error_code &error);
 
-    void write(SocketProtoBuffer * buffer);
+    void write(shared_ptr<ClientBufferConteiner> buffer);
 
-    void handle_write(SocketProtoBuffer * out_buff, const boost::system::error_code &error);
+    void handle_write(shared_ptr<ClientBufferConteiner> out_buff, const boost::system::error_code &error);
 
     void set_no_deley();
 
@@ -83,11 +97,11 @@ private:
 
 
 private:
-    ConcurentQueue<SocketProtoBuffer*> concurentQueueToServer;
-    ConcurentQueue<SocketProtoBuffer*> concurentQueueFromServer;
+    ConcurentQueue<shared_ptr<ClientBufferConteiner>> concurentQueueToServer;
+    ConcurentQueue<SocketProtoBuffer *> concurentQueueFromServer;
 
-    string &host;
-    string &port;
+    string host;
+    uint16_t port;
 
     SocketProtoBuffer * in_buff;
 

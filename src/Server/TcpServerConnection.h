@@ -8,13 +8,12 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <boost/bind.hpp>
-#include <boost/asio.hpp>
 #include <cstdint>
-#include <boost/enable_shared_from_this.hpp>
 
 #include "../DefinedMessages.h"
 #include "../Queue/ConcurentQueue.h"
 #include "TcpServerOutcomeMessage.h"
+#include "../Msg/MsgBuilder.h"
 
 
 using namespace boost::asio::ip;
@@ -23,38 +22,38 @@ using namespace std;
 
 class ServerHandler;
 class TcpServerConnection :
-        public boost::enable_shared_from_this<TcpServerConnection>
-{
+        public std::enable_shared_from_this<TcpServerConnection>{
 
 public:
-    typedef boost::shared_ptr<TcpServerConnection> TcpServerConnectionPointer;
-    static TcpServerConnectionPointer create(boost::asio::io_service& io_service, ServerHandler *serverHandler)
+    static std::shared_ptr<TcpServerConnection> create(boost::asio::io_service& io_service, ServerHandler *serverHandler)
     {
-        return TcpServerConnectionPointer(new TcpServerConnection(io_service,serverHandler ));
+        return std::make_shared<TcpServerConnection>(TcpServerConnection(io_service,serverHandler));
     }
-
-    tcp::socket& socket();
+    TcpServerConnection() = default;;
+    TcpServerConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler);
+    tcp::socket * socket();
     void sendBulk(SocketProtoBuffer *buffer);
     void set_no_delay();
     void send_server_welcome();
     void send_server_goodbye();
+    void close();
 private:
-    explicit TcpServerConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler);
     void handle_send_welcome_message(const boost::system::error_code &errorCode, size_t);
     void handle_read_len(const boost::system::error_code &errorCode, size_t size);
     void handle_read_data(const boost::system::error_code &errorCode, size_t size);
     void handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size);
     void handle_send_server_goodbye(const boost::system::error_code &errorCode, size_t size);
-    void close();
+
 
     static uint32_t client_id;
-    ServerHandler * serverHandler;
-    tcp::socket socket_;
-    uint32_t len_in;
-    SocketProtoBuffer * in;
+    ServerHandler * serverHandler{};
+    tcp::socket * socket_ = nullptr;
+    uint32_t len_in{};
+    SocketProtoBuffer * in{};
+    MsgBuilder *builder{};
 
 
-    uint32_t id;
+    uint32_t id{};
 };
 
 

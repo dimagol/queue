@@ -65,9 +65,6 @@ public:
     inline const uint32_t getNumOfChunks() const {
         return num_of_chunks;
     }
-    inline void releaseBufferList(){
-        BufferPool::bufferPool->release(socketProtoBuffer);
-    }
 private:
     const string channelName;
     const MsgType type;
