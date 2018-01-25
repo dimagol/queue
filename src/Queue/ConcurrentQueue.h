@@ -9,13 +9,16 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include "IConcurrentQueue.h"
 
 template <typename T>
-class ConcurentQueue
+class ConcurrentQueue : public IConcurrentQueue<T>
 {
 public:
 
-    T pop()
+    ConcurrentQueue() {}
+
+    T pop() override
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         while (queue_.empty())
@@ -27,7 +30,7 @@ public:
         return item;
     }
 
-    T try_pop()
+    T try_pop() override
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         if (queue_.empty())
@@ -39,18 +42,7 @@ public:
         return item;
     }
 
-    void pop(T& item)
-    {
-        std::unique_lock<std::mutex> mlock(mutex_);
-        while (queue_.empty())
-        {
-            cond_.wait(mlock);
-        }
-        item = queue_.front();
-        queue_.pop();
-    }
-
-    void push(const T& item)
+    void push( T& item) override
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         queue_.push(item);
@@ -58,15 +50,10 @@ public:
         cond_.notify_one();
     }
 
-    void push(T&& item)
-    {
-        std::unique_lock<std::mutex> mlock(mutex_);
-        queue_.push(std::move(item));
-        mlock.unlock();
-        cond_.notify_one();
+    virtual ~ConcurrentQueue() {
+
     }
 
-private:
     std::queue<T> queue_;
     std::mutex mutex_;
     std::condition_variable cond_;

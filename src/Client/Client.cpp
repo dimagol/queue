@@ -102,7 +102,6 @@ void Client::handle_body(const boost::system::error_code &error) {
 }
 
 void Client::write(shared_ptr<ClientBufferConteiner> buffer) {
-    cout << "wrote " << endl;
     boost::asio::async_write(socket_,
                              boost::asio::buffer(buffer->current->msg_complete_buff,
                                                  buffer->current->get_msg_all_data_len()),

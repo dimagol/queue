@@ -16,7 +16,7 @@
 #include <utility>
 
 #include "../DefinedMessages.h"
-#include "../Queue/ConcurentQueue.h"
+#include "../Queue/ConcurrentQueue.h"
 #include "TcpServerConnection.h"
 #include "TcpServerIncomeMessage.h"
 #include "TcpServerOutcomeMessage.h"
@@ -36,8 +36,8 @@ public:
     void register_client(std::shared_ptr<TcpServerConnection> conn, uint32_t id);
     void deregister_client(uint32_t id);
 
-    ConcurentQueue<std::shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
-    ConcurentQueue<std::shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
+    ConcurrentQueue<std::shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
+    ConcurrentQueue<std::shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
     MsgBuilder * builder;
 };
 

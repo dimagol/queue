@@ -23,7 +23,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include "../Buff/BufferPool.h"
-#include "../Queue/ConcurentQueue.h"
+#include "../Queue/ConcurrentQueue.h"
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -97,8 +97,8 @@ private:
 
 
 private:
-    ConcurentQueue<shared_ptr<ClientBufferConteiner>> concurentQueueToServer;
-    ConcurentQueue<SocketProtoBuffer *> concurentQueueFromServer;
+    ConcurrentQueue<shared_ptr<ClientBufferConteiner>> concurentQueueToServer;
+    ConcurrentQueue<SocketProtoBuffer *> concurentQueueFromServer;
 
     string host;
     uint16_t port;

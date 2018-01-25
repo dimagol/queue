@@ -29,11 +29,7 @@ TcpServer::TcpServer(uint16_t port, MsgBuilder * builder):
 
 
 shared_ptr<TcpServerIncomeMessage> TcpServer::recieve() {
-    auto msg = serverHandler.concurentQueueFromClients.try_pop();
-    if(msg != nullptr){
-        return msg;
-    }
-    return nullptr;
+    return serverHandler.concurentQueueFromClients.try_pop();
 }
 
 
@@ -90,7 +86,7 @@ void TcpServer::handle_accept(std::shared_ptr<TcpServerConnection> new_connectio
     }
 }
 
-void TcpServer::send(const shared_ptr<TcpServerOutcomeMessage> &outMsg) {
+void TcpServer::send(shared_ptr<TcpServerOutcomeMessage> &outMsg) {
     serverHandler.concurentQueueToClient.push(outMsg);
 }
 
