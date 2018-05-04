@@ -50,6 +50,13 @@ public:
         cond_.notify_one();
     }
 
+    void push(T &&item) override {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        queue_.push(std::move(item));
+        mlock.unlock();
+        cond_.notify_one();
+    }
+
     virtual ~ConcurrentQueue() {
 
     }

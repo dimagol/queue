@@ -11,9 +11,9 @@
 #include <cstdint>
 
 #include "../DefinedMessages.h"
-#include "../Queue/ConcurrentQueue.h"
 #include "TcpServerOutcomeMessage.h"
 #include "../Msg/MsgBuilder.h"
+#include "../Queue/AsyncLimitedQueue.h"
 
 
 using namespace boost::asio::ip;
@@ -29,31 +29,47 @@ public:
     {
         return std::make_shared<TcpServerConnection>(TcpServerConnection(io_service,serverHandler));
     }
-    TcpServerConnection() = default;;
+    TcpServerConnection() = default;
     TcpServerConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler);
     tcp::socket * socket();
-    void sendBulk(SocketProtoBuffer *buffer);
+
+    bool sendBulk(SocketProtoBuffer *buffer);
     void set_no_delay();
-    void send_server_welcome();
+    void register_and_send_server_welcome();
     void send_server_goodbye();
     void close();
+
+    bool errorOccured = false;
+    bool writeInProgress = false;
+    bool duringReading = false;
+
+    void tryRead();
+    void tryWrite();
+
 private:
     void handle_send_welcome_message(const boost::system::error_code &errorCode, size_t);
-    void handle_read_len(const boost::system::error_code &errorCode, size_t size);
-    void handle_read_data(const boost::system::error_code &errorCode, size_t size);
-    void handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size);
     void handle_send_server_goodbye(const boost::system::error_code &errorCode, size_t size);
 
 
+    void handle_read_len(const boost::system::error_code &errorCode, size_t size);
+    void handle_read_data(const boost::system::error_code &errorCode, size_t size);
+    void handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size);
+
+
     static uint32_t client_id;
-    ServerHandler * serverHandler{};
-    tcp::socket * socket_ = nullptr;
+    ServerHandler * serverHandler;
+    tcp::socket * tcpServerSocket = nullptr;
     uint32_t len_in{};
     SocketProtoBuffer * in{};
     MsgBuilder *builder{};
+    AsyncLimitedQueue<SocketProtoBuffer *> sendQueue;
 
 
     uint32_t id{};
+    bool sendingData;
+    bool appConnected;
+
+    void doSendBuffer(SocketProtoBuffer *buffer);
 };
 
 

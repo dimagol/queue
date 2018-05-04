@@ -155,25 +155,41 @@ void runProducer(string &serverHost,uint16_t producerPort) {
     TSLogger::globalLogger->init("producer.log", true, TSLogger::TRACE);
     MsgBuilder builder(BufferPool::bufferPool);
     boost::asio::io_service io_service;
-    Client client(io_service, serverHost, producerPort);
+    Client client(io_service, serverHost, producerPort, SLEEP);
     thread pClient(boost::bind(&Client::run, &client));
+    usleep(1000000000);
+//    exit(0);
     client.send(builder.buildPostRegistrationMsg("222222"));
     client.send(builder.buildPostRegistrationMsg("111111"));
+    int z = 3500000;
     stringstream ss("");
-    for (int i = 0 ; i < 2048; i++){
+    for (int i = 0; i < 20; i++) {
         ss << "hahahah sent ";
     }
-    for (int i = 0 ; i < 2048; i++){
+    for (int i = 0; i < 20; i++) {
         ss << "ssasa sent ";
     }
-    client.send(builder.buildPostPostChannelsResMsg("222222",ss.str()));
 
-    for (int i = 0; i < 5 ; i++){
+    auto buff = builder.buildPostPostChannelsResMsg("222222", ss.str());
+    while (z > 0 ) {
+        z--;
+//        cout << z <<endl;
+
+        if (buff == nullptr){
+//            LOG_ERROR("no buffers client");
+            usleep(10);
+        } else{
+            client.send(buff);
+        }
+
+//        cout << "end\n";
+        for (int i = 0; i < 5; i++) {
 
 //        usleep(1000*5);
-    }
+        }
 
-    client.recieve()->print_hex_memory();
+//        client.recieve()->print_hex_memory();
+    }
     pClient.join();
 }
 //
@@ -181,7 +197,7 @@ void runConsumer(string &serverHost,uint16_t consumerPort) {
     TSLogger::globalLogger->init("consumer.log", true, TSLogger::TRACE);
     MsgBuilder builder(BufferPool::bufferPool);
     boost::asio::io_service io_service;
-    Client client(io_service, serverHost, consumerPort);
+    Client client(io_service, serverHost, consumerPort, SLEEP);
     thread pClient(boost::bind(&Client::run, &client));
     client.send(builder.buildListenRegistrationMsg("111111"));
     client.send(builder.buildListenRegistrationMsg("222222"));
@@ -197,7 +213,7 @@ void runConsumer(string &serverHost,uint16_t consumerPort) {
 void runServer(uint16_t consumerPort, uint16_t producerPort) {
     TSLogger::globalLogger->init("server.log", true, TSLogger::TRACE);
     MsgBuilder builder(BufferPool::bufferPool);
-    Chain chain(consumerPort, producerPort, &builder);
+    Chain chain(consumerPort, producerPort, &builder, 1024, SLEEP);
     chain.runThreads();
     chain.join();
 }
@@ -227,29 +243,72 @@ int run(int argc, char *argv[]) {
     }
     return 0;
 }
-struct S{
-    S(const string &g) : g(g) {}
-
-    S() :g(""){}
-
-    string g;
-};
-int main(int argc, char *argv[]) {
-    IConcurrentQueue<S> * queue1 = new ConcurrentQueueSingleConsumer<S>(10,SLEEP);
-    char * data = (char *)"ssssss";
-    S s("xxx");
-    shared_ptr<S> ptr = make_shared<S>(s);
-    queue1->push(s);
-//
-//    queue1->push(ptr);
-//    char * z = * (queue1->pop().get());
-//    cout << z << endl;
-//    auto zz = (queue1->try_pop());
-//    if(zz == nullptr){
-//        cout << "ddd" ;
+//int z = 9;
+//class S{
+//public:
+//    explicit S(const string &g) : g(g) {
+//        kaka = new char[50];
+//        strcpy(kaka,(char *)g.c_str());
 //    }
-//    cout << (uint64_t)z << endl;
-////    return run(argc, argv);
+//    virtual ~S() {
+//        cout << this << "   kkkk  "  << g << "  "<< kaka << endl;
+//    }
+//    S( S &obj){
+//        kaka = obj.kaka;
+//        cout << "cc22cc" << endl;
+//    }
+//
+//    S(S&& other){
+//        z=6;
+//    }
+//    S& operator=(S&& other){
+//        z=2;
+//    }
+//
+//
+//
+//    char *kaka{};
+//    string g;
+//};
+//
+//
+//
+//void func( S &&s){
+//    cout << "sss" << s.kaka;
+//}
+int main(int argc, char *argv[]) {
+//    shared_ptr<S> ptr2;
+//    S s("xxx");
+//
+//    IConcurrentQueue<shared_ptr<S>> * queue1 = new ConcurrentQueueSingleConsumer<shared_ptr<S>>(10,SLEEP);
+////    S &&k = ;
+//    {
+//        vector<S> vector1;
+//        char *data = (char *) "ssssss";
+//
+//        vector1.push_back(std::move(s));
+//
+//        shared_ptr<S> ptr = make_shared<S>(s);
+////    shared_ptr<S> ptr2 = std::move;
+//        func(std::move(s));
+////        S &&k = std::move(s);
+//    }
+//    cout << z << endl;
+////    queue1->push(make_shared<S>(s));
+//
+//
+//
+//
+////
+////    queue1->push(ptr);
+////    char * z = * (queue1->pop().get());
+////    cout << z << endl;
+////    auto zz = (queue1->try_pop());
+////    if(zz == nullptr){
+////        cout << "ddd" ;
+////    }
+////    cout << (uint64_t)z << endl;
+   return run(argc, argv);
 
 }
 

@@ -136,6 +136,14 @@ SocketProtoBuffer *BufferPool::get() {
     return ret;
 }
 
+int BufferPool::getSize() {
+    lock.lock();
+
+    uint32_t i =  bufferVector.size();
+    lock.unlock();
+    return i;
+}
+
 void BufferPool::release(SocketProtoBuffer * buffer) {
     lock.lock();
     auto next = buffer;
@@ -143,7 +151,6 @@ void BufferPool::release(SocketProtoBuffer * buffer) {
         auto tmp = next;
         next = next->nextBuffer;
         tmp->reset();
-//        cout << "rel vec size " << bufferVector.size() << "instanse " << tmp <<endl;
         bufferVector.push_back(tmp);
     }
     lock.unlock();

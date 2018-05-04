@@ -43,7 +43,8 @@ private:
     uint32_t total;
     uint32_t bufferLen;
 
-
+public:
+    int getSize();
 };
 
 #endif //TCP_SHMAFKA_BUFFERPOLL_H

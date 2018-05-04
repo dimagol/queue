@@ -11,11 +11,11 @@
 
 class Chain {
 public:
-    Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder) :
+    Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder, uint32_t queueLen, StrategyType strategyType) :
             consumerPort(consumerPort),
             producerPort(producerPort),
-            consumerTcpServer(consumerPort,builder),
-            producerTcpServer(producerPort,builder),
+            consumerTcpServer(consumerPort,builder,queueLen,strategyType),
+            producerTcpServer(producerPort,builder,queueLen,strategyType),
             builder(builder)
     {
         worker.setShouldRun(true);
@@ -23,6 +23,7 @@ public:
         worker.setConsumerServer(&consumerTcpServer);
         worker.setProducerServer(&producerTcpServer);
         worker.setBuilder(builder);
+        worker.setWaitingStrategy(getStrategy(strategyType));
 
         workerThread.init(&worker);
         consumerServerThread.init(&consumerTcpServer);

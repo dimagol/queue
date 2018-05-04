@@ -11,9 +11,10 @@ void Worker::run() {
         return;
     }
     while (shouldRun){
-        auto prodMsg = producerServer->recieve();
+        auto prodMsg = producerServer->tryRecieve();
 
         if(prodMsg != nullptr){
+//            prodMsg->releaseBuffer();
          auto event = processor.getEventByBuff(*prodMsg);
             if(event.getType() != MsgType::UNDEFINED){
                 handlePostMsg(event);
@@ -24,14 +25,19 @@ void Worker::run() {
 
         }
 
-        auto consMsg = consumerServer->recieve();
+        auto consMsg = consumerServer->tryRecieve();
         if(consMsg != nullptr){
+//            consMsg ->releaseBuffer();
             auto event = processor.getEventByBuff(*consMsg);
             if(event.getType() != MsgType::UNDEFINED){
                 handleListenMsg(event);
             } else {
                 LOG_ERROR("got undefined msg")
             }
+        }
+
+        if(consMsg == nullptr && prodMsg == nullptr){
+            waitingStrategy->wait();
         }
     }
     LOG_INFO("worker done")
@@ -113,9 +119,9 @@ void Worker::handlePost(ProceededEvent &event) const {
         if (channel->haveNewData()) {
             auto data = channel->getBuffDone();
             channel->setNoData();
-            consumerServer->send(
-                    make_shared<TcpServerOutcomeMessage>(data->head,
-                                                         channel->getRegisteredUsers()));
+            auto ptr = make_shared<TcpServerOutcomeMessage>(data->head,
+                                                            channel->getRegisteredUsers());
+            consumerServer->send(ptr);
         }
     }
 }
@@ -150,7 +156,8 @@ void Worker::handlePostListChannels(ProceededEvent &event) const {
     string channelsStr = this->channelDb->getChannelListStr();
     auto buff = msgBuilder->buildListenListChannelsResMsg(channelsStr);
     if (buff != nullptr) {
-        this->producerServer->send(make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id()));
+        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
+        this->producerServer->send(ptr);
     } else{
         LOG_ERROR("got null buff");
     }
@@ -194,7 +201,8 @@ void Worker::handleListenListChannels(ProceededEvent &event) const {
     string str = this->channelDb->getChannelListStr();
     auto buff = msgBuilder->buildListenListChannelsResMsg(str);
     if (buff != nullptr) {
-        this->consumerServer->send(make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id()));
+        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
+        this->consumerServer->send(ptr);
     } else{
         LOG_ERROR("got null buff");
     }
@@ -219,4 +227,8 @@ void Worker::setShouldRun(volatile bool shouldRun) {
 
 void Worker::setBuilder(MsgBuilder *builder) {
     Worker::msgBuilder = builder;
+}
+
+void Worker::setWaitingStrategy(WaitingStrategy *waitingStrategy) {
+    Worker::waitingStrategy = waitingStrategy;
 }

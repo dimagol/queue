@@ -24,7 +24,7 @@ set(SOURCE_FILES src/main.cpp
         src/DefinedMessages.h
         src/Buff/BufferPool.h
         src/Buff/BufferPool.cpp
-        src/Queue/ConcurentQueue.h
+        src/Queue/ConcurrentQueue.h
         src/Configuration/dictionary.h
         src/Configuration/dictionary.cpp
         src/Configuration/iniparser.h
@@ -37,7 +37,42 @@ set(SOURCE_FILES src/main.cpp
         src/Server/TcpServerConnection.h
         src/Client/Client.cpp
         src/Client/Client.h
-        src/Logging/TSLogger.h src/Processor/MsgToEventProcessor.cpp src/Processor/MsgToEventProcessor.h src/Processor/ProceededEvent.cpp src/Processor/ProceededEvent.h src/Server/TcpServerIncomeMessage.h src/Msg/MsgType.h src/Msg/MsgConsts.h src/ChanelDb/ChannelDb.cpp src/ChanelDb/ChannelDb.h src/ChanelDb/Channel.cpp src/ChanelDb/Channel.h src/Server/TcpServerOutcomeMessage.h src/Threads/ServerThread.cpp src/Threads/ServerThread.h src/Worker/Worker.cpp src/Worker/Worker.h src/Buff/SocketProtoBuffer.h src/Threads/WorkerThread.cpp src/Threads/WorkerThread.h src/Chain/Chain.cpp src/Chain/Chain.h src/Msg/MsgBuilder.cpp src/Msg/MsgBuilder.h src/Logging/TSLogger.cpp src/Buff/stacktrace.h)
+        src/Logging/TSLogger.h
+        src/Processor/MsgToEventProcessor.cpp
+        src/Processor/MsgToEventProcessor.h
+        src/Processor/ProceededEvent.cpp
+        src/Processor/ProceededEvent.h
+        src/Server/TcpServerIncomeMessage.h
+        src/Msg/MsgType.h
+        src/Msg/MsgConsts.h
+        src/ChanelDb/ChannelDb.cpp
+        src/ChanelDb/ChannelDb.h
+        src/ChanelDb/Channel.cpp
+        src/ChanelDb/Channel.h
+        src/Server/TcpServerOutcomeMessage.h
+        src/Threads/ServerThread.cpp
+        src/Threads/ServerThread.h
+        src/Worker/Worker.cpp
+        src/Worker/Worker.h
+        src/Buff/SocketProtoBuffer.h
+        src/Threads/WorkerThread.cpp
+        src/Threads/WorkerThread.h
+        src/Chain/Chain.cpp
+        src/Chain/Chain.h
+        src/Msg/MsgBuilder.cpp
+        src/Msg/MsgBuilder.h
+        src/Logging/TSLogger.cpp
+        src/ArgsParser.cpp
+        src/ArgsParser.h
+        src/Queue/IConcurrentQueue.h
+        src/Queue/ConcurrentQueueSingleConsumer.h
+        src/WaitingStrategy.cpp
+        src/WaitingStrategy.h
+        src/Queue/AsyncLimitedQueue.cpp
+        src/Queue/AsyncLimitedQueue.h
+        src/Server/Epoll/EpollTcpServer.cpp
+        src/Server/Epoll/EpollTcpServer.h
+        src/Server/Epoll/IServer.h src/Server/Epoll/Client.h)
 
 if(Boost_FOUND)
     include_directories(

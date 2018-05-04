@@ -23,8 +23,9 @@ public:
             msg_complete_buff(new uint8_t[len + MSG_LEN_BUFF_LEN]),
             msg_len_buff(msg_complete_buff),
             msg_data_buff(msg_complete_buff + MSG_LEN_BUFF_LEN),
-            wasCopiedOrMoved(false){}
+            wasCopiedOrMoved(false),offset(0){}
 
+    // copy constructor
     SocketProtoBuffer (SocketProtoBuffer &obj):
             len(obj.len),
             nextBuffer(obj.nextBuffer),
@@ -32,10 +33,13 @@ public:
             msg_complete_buff(obj.msg_complete_buff),
             msg_len_buff(obj.msg_len_buff),
             msg_data_buff(obj.msg_data_buff),
-            wasCopiedOrMoved(false){
+            wasCopiedOrMoved(false),
+            offset(obj.offset){
         obj.wasCopiedOrMoved = true;
     }
 
+
+    // move constructor
     SocketProtoBuffer (SocketProtoBuffer &&obj) noexcept:
             len(obj.len),
             nextBuffer(obj.nextBuffer),
@@ -43,7 +47,8 @@ public:
             msg_complete_buff(obj.msg_complete_buff),
             msg_len_buff(obj.msg_len_buff),
             msg_data_buff(obj.msg_data_buff),
-            wasCopiedOrMoved(false){
+            wasCopiedOrMoved(false),
+            offset(obj.offset){
         obj.wasCopiedOrMoved = true;
     }
 
@@ -84,10 +89,15 @@ public:
     uint8_t * const msg_complete_buff;
     uint8_t * const msg_len_buff;
     uint8_t * const msg_data_buff;
-    uint32_t sendingRefCount;
+
+    uint32_t offset;
+
+
     SocketProtoBuffer * nextBuffer;
     bool wasCopiedOrMoved;
     const uint32_t len;
+    private:
+    uint32_t sendingRefCount;
 
 };
 
@@ -100,7 +110,12 @@ const uint32_t SocketProtoBuffer::get_int(uint32_t offset) const {
 }
 
 void SocketProtoBuffer::print_hex_memory() const {
+
     int all_msg_len = get_msg_len() + 4;
+    if (all_msg_len > len)
+    {
+        all_msg_len=len;
+    }
     int num_of_lines = all_msg_len / 16;
     int res = all_msg_len % 16;
     int index = 0;

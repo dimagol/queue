@@ -9,8 +9,9 @@
 uint32_t TcpServerConnection::client_id = 0;
 
 TcpServerConnection::TcpServerConnection(boost::asio::io_service& io_service, ServerHandler *serverHandler)
-        : socket_(new tcp::socket(io_service)),
-          serverHandler(serverHandler){
+        : tcpServerSocket(new tcp::socket(io_service)),
+          serverHandler(serverHandler),
+          sendQueue(64){
     in = BufferPool::bufferPool->get();
     id = client_id++;
 }
@@ -18,21 +19,20 @@ TcpServerConnection::TcpServerConnection(boost::asio::io_service& io_service, Se
 
 void TcpServerConnection::set_no_delay(){
     boost::asio::ip::tcp::no_delay option(true);
-    socket_->set_option(option);
+    tcpServerSocket->set_option(option);
 }
 
 
 // send the welcome message
-void TcpServerConnection::send_server_welcome() {
-    boost::asio::async_write(*socket_,
+void TcpServerConnection::register_and_send_server_welcome() {
+    writeInProgress = true;
+    boost::asio::async_write(*tcpServerSocket,
                              boost::asio::buffer(DefinedMessages::hello_msg->msg_complete_buff,
                                                  DefinedMessages::hello_msg->get_msg_all_data_len()),
                              boost::bind(&TcpServerConnection::handle_send_welcome_message,
                                          shared_from_this(),
                                          boost::asio::placeholders::error,
                                          boost::asio::placeholders::bytes_transferred));
-
-
     serverHandler->register_client(shared_from_this(),id);
 }
 
@@ -43,19 +43,23 @@ void TcpServerConnection::handle_send_welcome_message(const boost::system::error
         serverHandler->deregister_client(id);
         return;
     }
-    boost::asio::async_read(*socket_,
-                            boost::asio::buffer(in->msg_len_buff, MSG_LEN_BUFF_LEN),
-                            boost::bind(&TcpServerConnection::handle_read_len,
-                                        shared_from_this(),
-                                        boost::asio::placeholders::error,
-                                        boost::asio::placeholders::bytes_transferred));
+
+    if(size != DefinedMessages::hello_msg->get_msg_all_data_len()){
+        LOG_ERROR("unexpected size sent, expected: ", DefinedMessages::hello_msg->get_msg_all_data_len(), " got: ",size);
+        BufferPool::bufferPool->release(in);
+        serverHandler->deregister_client(id);
+        return;
+    }
+    writeInProgress = false;
+    appConnected = true;
+
 }
 
 
 
 // send the welcome message
 void TcpServerConnection::send_server_goodbye() {
-    boost::asio::async_write(*socket_,
+    boost::asio::async_write(*tcpServerSocket,
                              boost::asio::buffer(DefinedMessages::goodbye_msg->msg_complete_buff,
                                                  DefinedMessages::goodbye_msg->get_msg_all_data_len()),
                              boost::bind(&TcpServerConnection::handle_send_server_goodbye,
@@ -72,8 +76,6 @@ void TcpServerConnection::handle_send_server_goodbye(const boost::system::error_
         return;
     }
 }
-
-
 
 void TcpServerConnection::handle_read_len(const boost::system::error_code &errorCode, size_t size){
     if (__glibc_unlikely(errorCode != nullptr)){
@@ -92,12 +94,13 @@ void TcpServerConnection::handle_read_len(const boost::system::error_code &error
 
     len_in = in->get_msg_len();
     if(__glibc_unlikely(len_in > in->len || (errorCode != nullptr))){
-        LOG_WARN("got to big msg or error");
+        in->print_hex_memory();
+        LOG_WARN("got to big msg or error ", len_in , "  ", in->len , "   ",errorCode);
         BufferPool::bufferPool->release(in);
         serverHandler->deregister_client(id);
         return;
     }
-    boost::asio::async_read(*socket_,
+    boost::asio::async_read(*tcpServerSocket,
                             boost::asio::buffer(in->msg_data_buff, len_in),
                             boost::bind(&TcpServerConnection::handle_read_data,
                                         shared_from_this(),
@@ -120,29 +123,18 @@ void TcpServerConnection::handle_read_data(const boost::system::error_code &erro
         serverHandler->deregister_client(id);
         return;
     }
-    serverHandler->concurentQueueFromClients.push(make_shared<TcpServerIncomeMessage>(in,id));
-
-    in = BufferPool::bufferPool->get();
-    boost::asio::async_read(*socket_,
-                            boost::asio::buffer(in->msg_complete_buff, MSG_LEN_BUFF_LEN),
-                            boost::bind(&TcpServerConnection::handle_read_len,
-                                        shared_from_this(),
-                                        boost::asio::placeholders::error,
-                                        boost::asio::placeholders::bytes_transferred));
+        auto ptr = make_shared<TcpServerIncomeMessage>(in,id);
+        serverHandler->concurentQueueFromClients.push(ptr);
+        in = BufferPool::bufferPool->get();
+    tryRead();
 }
 
-void TcpServerConnection::sendBulk(SocketProtoBuffer *buffer) {
-    boost::asio::async_write(*socket_,
-                             boost::asio::buffer(buffer->msg_complete_buff, buffer->get_msg_all_data_len()),
-                             boost::bind(&TcpServerConnection::handle_send_data,
-                                         shared_from_this(),
-                                         buffer,
-                                         boost::asio::placeholders::error,
-                                         boost::asio::placeholders::bytes_transferred));
+bool TcpServerConnection::sendBulk(SocketProtoBuffer *buffer) {
+        return sendQueue.try_push(buffer);
 }
 
 tcp::socket * TcpServerConnection::socket() {
-    return socket_;
+    return tcpServerSocket;
 }
 
 void TcpServerConnection::handle_send_data(SocketProtoBuffer *buffer, const boost::system::error_code &errorCode, size_t size) {
@@ -155,21 +147,71 @@ void TcpServerConnection::handle_send_data(SocketProtoBuffer *buffer, const boos
         serverHandler->deregister_client(id);
         return;
     }
+
     if(buffer->nextBuffer != nullptr){
-        sendBulk(buffer->nextBuffer);
+        doSendBuffer(buffer->nextBuffer);
+    } else {
+        writeInProgress = false;
+        tryWrite();
     }
     buffer->decRef();
-    if(buffer->sendingRefCount == 0){
+    if(buffer->isZeroRef()){
         BufferPool::bufferPool->releaseOne(buffer);
     }
 
 }
 
+void TcpServerConnection::doSendBuffer(SocketProtoBuffer *buffer) {
+    async_write(*tcpServerSocket,
+                boost::asio::buffer(buffer->msg_complete_buff,
+                                    buffer->get_msg_all_data_len()),
+                bind(&TcpServerConnection::handle_send_data,
+                                             shared_from_this(),
+                                             buffer,
+                                             boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+}
+
 void TcpServerConnection::close() {
-    if(socket_ != nullptr){
-        socket_->close();
-        delete socket_;
-        socket_ = nullptr;
+    if(tcpServerSocket != nullptr){
+        tcpServerSocket->close();
+        delete tcpServerSocket;
+        tcpServerSocket = nullptr;
     }
+}
+
+void TcpServerConnection::tryRead() {
+    if(duringReading){
+        return;
+    }
+
+    if(tcpServerSocket->available() > 0){
+        duringReading = true;
+        boost::asio::async_read(*tcpServerSocket,
+                                boost::asio::buffer(in->msg_len_buff, MSG_LEN_BUFF_LEN),
+                                boost::bind(&TcpServerConnection::handle_read_len,
+                                            shared_from_this(),
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    } else{
+        duringReading = false;
+    }
+
+}
+
+void TcpServerConnection::tryWrite() {
+    if(writeInProgress){
+        return;
+    }
+
+    auto buff = sendQueue.try_pop();
+
+    if (buff != nullptr){
+        writeInProgress = true;
+        doSendBuffer(buff);
+    } else {
+        writeInProgress = false;
+    }
+
 }
 

@@ -44,6 +44,7 @@ public:
                 return handleDisconnect(incomeMessage);
 
             default:
+                incomeMessage.getBuffer()->print_hex_memory();
                 return ProceededEvent(MsgType::UNDEFINED,incomeMessage.getId());
         }
     }

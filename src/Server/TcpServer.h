@@ -16,11 +16,12 @@
 #include <utility>
 
 #include "../DefinedMessages.h"
-#include "../Queue/ConcurrentQueue.h"
 #include "TcpServerConnection.h"
 #include "TcpServerIncomeMessage.h"
 #include "TcpServerOutcomeMessage.h"
 #include "../Msg/MsgBuilder.h"
+#include "../Queue/ConcurrentQueueSingleConsumer.h"
+#include "../Queue/ConcurrentQueue.h"
 
 
 using namespace boost::asio::ip;
@@ -33,22 +34,28 @@ public:
     unordered_map<uint32_t , std::shared_ptr<TcpServerConnection>> client_map;
 
 
+    ServerHandler(uint32_t queue_len, StrategyType waitingStrategy):
+            concurentQueueFromClients(queue_len,waitingStrategy),
+            concurentQueueToClient(queue_len,waitingStrategy),
+            builder(nullptr)
+    {}
+
     void register_client(std::shared_ptr<TcpServerConnection> conn, uint32_t id);
     void deregister_client(uint32_t id);
 
-    ConcurrentQueue<std::shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
-    ConcurrentQueue<std::shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
+    ConcurrentQueueSingleConsumer<std::shared_ptr<TcpServerIncomeMessage>> concurentQueueFromClients;
+    ConcurrentQueueSingleConsumer<std::shared_ptr<TcpServerOutcomeMessage>> concurentQueueToClient;
     MsgBuilder * builder;
 };
 
 class TcpServer
 {
 public:
-    explicit TcpServer(uint16_t port, MsgBuilder * builder);
+    explicit TcpServer(uint16_t port, MsgBuilder * builder, uint32_t queueLen, StrategyType strategyType);
 
-    void send(const std::shared_ptr<TcpServerOutcomeMessage> &outMsg);
+    void send(std::shared_ptr<TcpServerOutcomeMessage> &outMsg);
 
-    std::shared_ptr<TcpServerIncomeMessage> recieve();
+    std::shared_ptr<TcpServerIncomeMessage> tryRecieve();
 
     void run();
 
@@ -71,6 +78,7 @@ private:
     tcp::acceptor acceptor_;
     volatile bool shouldRun = true;
     ServerHandler serverHandler;
+    WaitingStrategy *waitingStrategy;
 
 
 

@@ -25,6 +25,10 @@ public:
 
     void setShouldRun(volatile bool shouldRun);
 
+    void setWaitingStrategy(WaitingStrategy *waitingStrategy);
+
+    void setBuilder(MsgBuilder *builder);
+
 private:
     // post handlers
     inline void handlePostMsg(ProceededEvent &event) const;
@@ -63,8 +67,10 @@ private:
     TcpServer * consumerServer;
     MsgToEventProcessor processor;
     MsgBuilder  *msgBuilder;
-public:
-    void setBuilder(MsgBuilder *builder);
+    WaitingStrategy *waitingStrategy;
+
+
+
 
 };
 

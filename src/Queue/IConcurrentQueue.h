@@ -15,5 +15,7 @@ public:
 
     virtual void push(T& item) = 0;
 
+    virtual void push(T&& item) = 0;
+
 };
 #endif //TCP_SHMAFKA_ICONCURRENTQUEUE_H
