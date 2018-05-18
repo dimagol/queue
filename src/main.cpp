@@ -5,6 +5,7 @@
 #include "Chain/Chain.h"
 #include "ArgsParser.h"
 #include "Queue/ConcurrentQueueSingleConsumer.h"
+#include "Server/Epoll/EpollTcpServer.h"
 
 //int run(int argc, char *const *argv);
 
@@ -277,6 +278,12 @@ int run(int argc, char *argv[]) {
 //    cout << "sss" << s.kaka;
 //}
 int main(int argc, char *argv[]) {
+    TSLogger::globalLogger->init("consumer.log", true, TSLogger::TRACE);
+    EpollTcpServer tcpServer;
+    tcpServer.test();
+
+
+
 //    shared_ptr<S> ptr2;
 //    S s("xxx");
 //

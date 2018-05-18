@@ -23,7 +23,7 @@ public:
             msg_complete_buff(new uint8_t[len + MSG_LEN_BUFF_LEN]),
             msg_len_buff(msg_complete_buff),
             msg_data_buff(msg_complete_buff + MSG_LEN_BUFF_LEN),
-            wasCopiedOrMoved(false),offset(0){}
+            wasCopiedOrMoved(false),offset(0),lastBuff(nullptr){}
 
     // copy constructor
     SocketProtoBuffer (SocketProtoBuffer &obj):
@@ -94,6 +94,8 @@ public:
 
 
     SocketProtoBuffer * nextBuffer;
+    SocketProtoBuffer * lastBuff;
+
     bool wasCopiedOrMoved;
     const uint32_t len;
     private:
@@ -102,11 +104,11 @@ public:
 };
 
 const string SocketProtoBuffer::get_string(uint32_t offset) const {
-    return string((char *)msg_data_buff + offset);
+    return string((char *)msg_len_buff + offset);
 }
 
 const uint32_t SocketProtoBuffer::get_int(uint32_t offset) const {
-    return ntohl(*((uint32_t * )(msg_data_buff + offset)));
+    return ntohl(*((uint32_t * )(msg_len_buff + offset)));
 }
 
 void SocketProtoBuffer::print_hex_memory() const {

@@ -2,21 +2,17 @@
 #include <string>
 #include <pthread.h>
 #include <unordered_map>
+#include <sys/epoll.h>
 #include "../../Buff/BufferPool.h"
 #include "../../Queue/ConcurrentQueue.h"
 #include "../../Logging/TSLogger.h"
+#include "../../Buff/ThreadSafeBufferList.h"
+#include "ThreadSafeUserDataMap.h"
 
 #define LISTENQ     20
 #define TIMEOUT     500
 
 class EpollTcpServer{
-
-    class UserData {
-    public:
-        int fd = -1;
-        SocketProtoBuffer* bufferOut = nullptr;
-        SocketProtoBuffer* bufferIn = nullptr;
-    };
 
     class EpollTask {
     public:
@@ -26,66 +22,19 @@ class EpollTcpServer{
         epoll_data_t data{0};
     };
 
-
-    unordered_map<uint32_t , shared_ptr<UserData>> clientMap;
-
-    mutex mapLock;
-
-    shared_ptr<UserData> getFromMap(uint32_t id){
-        mapLock.lock();
-        auto fromMap = clientMap.find(id);
-        auto mapEnd = clientMap.end();
-        mapLock.unlock();
-        if(fromMap == mapEnd){
-            return nullptr;
-        } else{
-            return fromMap->second;
-        }
-    }
-
-    bool putToMap(uint32_t id, shared_ptr<UserData>  ptr){
-        mapLock.lock();
-        bool isInMap = clientMap.find(id) == clientMap.end();
-        if(!isInMap){
-            clientMap.insert(make_pair(id,ptr));
-        } else{
-            LOG_ERROR("id ", id, " already in map")
-        }
-        mapLock.unlock();
-        return !isInMap;
-    }
-
-    bool removeFromMap(uint32_t id){
-        mapLock.lock();
-        bool isInMap = clientMap.find(id) == clientMap.end();
-        if(isInMap){
-            clientMap.erase(id);
-            LOG_INFO("client ", id, " was removed")
-        } else{
-            LOG_ERROR("id ", id, " not in map")
-        }
-        mapLock.unlock();
-        return isInMap;
-    }
-
-    bool mapContains(uint32_t id){
-        mapLock.lock();
-        bool isInMap = clientMap.find(id) != clientMap.end();
-        mapLock.unlock();
-        return isInMap;
-    }
+    ThreadSafeUserDataMap userDataMap;
 
     int ePollFd;
     epoll_event listenerEpollEvent;
     epoll_event events[LISTENQ];
     int listenfd;
     volatile bool shouldRun = true;
-    ConcurrentQueue<shared_ptr<EpollTask>> readQue;
-    ConcurrentQueue<shared_ptr<EpollTask>> writeQue;
+    ConcurrentQueue<EpollTask*> readQue;
+    ConcurrentQueue<EpollTask*> writeQue;
     uint16_t listenPort;
     std::string listenAddr;
-    pthread_t tid1;
-    pthread_t tid2;
+    std::thread *writeTaskThread;
+    std::thread *readTaskThread;
 
 
 
@@ -93,13 +42,13 @@ class EpollTcpServer{
 
     void handleWrite(const epoll_event *event);
 
-    void initRWThreads() const;
+    void initRWThreads();
 
     void listenOnEpoll();
 
-    void * readTask(void *args);
+    void * readTask();
 
-    void * writeTask(void *args);
+    void * writeTask();
 
     void setNonBlocking(int sock);
 
@@ -107,7 +56,26 @@ class EpollTcpServer{
 
     void acceptClient(const epoll_event *event);
 
-    void handleIncomeMsg(SocketProtoBuffer *pBuffer);
+    void handleIncomeMsg(ThreadSafeBufferList * list);
+
+public:
+    void test();
+
+    int test1();
+
+    void shutdown();
+
+    int readNBytes(int fd, uint8_t *buffer, uint32_t len);
+
+    void disconnectClient(int fd);
+
+    int writeNBytes(int fd, uint8_t *buffer, uint32_t len);
+
+    void sendToClient(int fd, ThreadSafeBufferList * list);
+
+    void startRecv(int fd) const;
+
+    void startSend(int fd) const;
 };
 
 

@@ -72,7 +72,7 @@ set(SOURCE_FILES src/main.cpp
         src/Queue/AsyncLimitedQueue.h
         src/Server/Epoll/EpollTcpServer.cpp
         src/Server/Epoll/EpollTcpServer.h
-        src/Server/Epoll/IServer.h src/Server/Epoll/Client.h)
+        src/Server/Epoll/IServer.h src/Server/Epoll/Client.h src/Buff/BuffersList.h src/Buff/ThreadSafeBufferList.h src/Server/Epoll/ThreadSafeUserDataMap.h src/Server/Epoll/UserData.h src/Server/Epoll/SimpleMsgHeader.h src/Buff/ListOfBufferLists.h src/Buff/ThreadSafeListOfBuffersLists.h)
 
 if(Boost_FOUND)
     include_directories(
