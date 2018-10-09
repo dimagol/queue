@@ -11,13 +11,15 @@
 
 class Chain {
 public:
-    Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder, uint32_t queueLen, StrategyType strategyType) :
+    Chain(uint16_t consumerPort, uint16_t producerPort, MsgBuilder *builder, uint32_t queueLen, StrategyType strategyType, string &listenAddr) :
             consumerPort(consumerPort),
             producerPort(producerPort),
-            consumerTcpServer(consumerPort,builder,queueLen,strategyType),
-            producerTcpServer(producerPort,builder,queueLen,strategyType),
+            consumerTcpServer(),
+            producerTcpServer(),
             builder(builder)
     {
+        consumerTcpServer.init(listenAddr, consumerPort);
+        producerTcpServer.init(listenAddr, producerPort);
         worker.setShouldRun(true);
         worker.setChannelDb(&channelDb);
         worker.setConsumerServer(&consumerTcpServer);
@@ -52,8 +54,18 @@ private:
     uint16_t producerPort;
     ServerThread consumerServerThread;
     ServerThread producerServerThread;
-    TcpServer consumerTcpServer;
-    TcpServer producerTcpServer;
+    EpollTcpServer consumerTcpServer;
+public:
+    EpollTcpServer &getConsumerTcpServer() {
+        return consumerTcpServer;
+    }
+
+    EpollTcpServer &getProducerTcpServer() {
+        return producerTcpServer;
+    }
+
+private:
+    EpollTcpServer producerTcpServer;
     ChannelDb channelDb;
 public:
     ChannelDb &getChannelDb() {

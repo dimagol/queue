@@ -7,9 +7,9 @@
 
 
 #include "../ChanelDb/ChannelDb.h"
-#include "../Server/TcpServer.h"
 #include "../Processor/MsgToEventProcessor.h"
 #include "../Msg/MsgBuilder.h"
+#include "../Server/Epoll/EpollTcpServer.h"
 
 class Worker {
 
@@ -19,9 +19,9 @@ public:
     // setters
     void setChannelDb(ChannelDb * channelDb);
 
-    void setProducerServer(TcpServer* producerServer);
+    void setProducerServer(EpollTcpServer* producerServer);
 
-    void setConsumerServer(TcpServer* consumerServer);
+    void setConsumerServer(EpollTcpServer* consumerServer);
 
     void setShouldRun(volatile bool shouldRun);
 
@@ -63,8 +63,8 @@ private:
 private:
     volatile bool shouldRun = true;
     ChannelDb * channelDb;
-    TcpServer * producerServer;
-    TcpServer * consumerServer;
+    EpollTcpServer * producerServer;
+    EpollTcpServer * consumerServer;
     MsgToEventProcessor processor;
     MsgBuilder  *msgBuilder;
     WaitingStrategy *waitingStrategy;

@@ -7,7 +7,6 @@
 
 #include <string>
 #include "../Buff/BufferPool.h"
-#include "../Server/TcpServerConnection.h"
 #include "../Msg/MsgType.h"
 
 using namespace std;

@@ -6,7 +6,6 @@
 #define TCP_SHMAFKA_WORKERTHREAD_H
 
 #include <thread>
-#include "../Server/TcpServer.h"
 #include "../Logging/TSLogger.h"
 #include "../Worker/Worker.h"
 

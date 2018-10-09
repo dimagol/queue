@@ -64,6 +64,7 @@ public:
     }
 
     virtual ~BuffersList() {
+        BufferPool::bufferPool->releaseAllChain(head);
     }
     BuffersList * nextList = nullptr;
 private:

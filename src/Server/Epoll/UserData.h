@@ -13,14 +13,20 @@ class UserData {
 public:
     UserData() {
         sendListLsits = new ThreadSafeListOfBuffersLists();
-        recvList = new ThreadSafeBufferList;
+        recvList = new ThreadSafeBufferList();
+    }
+
+    virtual ~UserData(){
+        delete sendListLsits;
+        delete recvList;
     }
 
 public:
     int fd = -1;
-    ThreadSafeListOfBuffersLists * sendListLsits;
-    ThreadSafeBufferList * recvList;
+    ThreadSafeListOfBuffersLists * sendListLsits= nullptr;
+    ThreadSafeBufferList * recvList = nullptr;
 };
+
 
 
 #endif //TCP_SHMAFKA_USERDATA_H

@@ -1,31 +1,28 @@
-//#include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include "EpollTcpServer.h"
 #include "SimpleMsgHeader.h"
-#include <errno.h>
 
 // maximum received data byte
-void EpollTcpServer::setNonBlocking(int sock) {
+bool EpollTcpServer::setNonBlocking(int sock) {
     int opts;
     if ((opts = fcntl(sock, F_GETFL)) < 0) {
         LOG_ERROR("GETFL failed for", sock);
-        exit(-1);
+        return false;
     }
     opts = opts | O_NONBLOCK;
     if (fcntl(sock, F_SETFL, opts) < 0) {
         LOG_ERROR("SETFL failed for", sock);
-        exit(-1);
+        return false;
     }
+    return true;
 }
 
-int EpollTcpServer::runServer() {
+bool EpollTcpServer::runServer() {
     while (shouldRun)
     {
         int nfds = epoll_wait(ePollFd, events, LISTENQ, TIMEOUT);
@@ -41,79 +38,48 @@ int EpollTcpServer::runServer() {
                 handleWrite(event);
             } else{
                 LOG_ERROR("unknown epoll event");
+                return false;
             }
         }
     }
 
-    return 0;
+    return true;
 }
 
-void EpollTcpServer::listenOnEpoll() {
+bool EpollTcpServer::listenOnEpoll() {
     struct sockaddr_in serveraddr{0};
     // epoll descriptor, for handling accept
     ePollFd = epoll_create(256);
     listenfd = socket(PF_INET, SOCK_STREAM, 0);
     // set the descriptor as non-blocking
-    setNonBlocking(listenfd);
+    if (!setNonBlocking(listenfd)){
+        return false;
+    }
     // event related descriptor
     listenerEpollEvent.data.fd = listenfd;
     // monitor in message, edge trigger
     listenerEpollEvent.events = EPOLLIN | EPOLLET;
     // register epoll event
-    epoll_ctl(ePollFd, EPOLL_CTL_ADD, listenfd, &listenerEpollEvent);
+    if(epoll_ctl(ePollFd, EPOLL_CTL_ADD, listenfd, &listenerEpollEvent) != 0){
+        LOG_ERROR("error while running epol ctl")
+        return false;
+    };
 
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(listenPort);
     serveraddr.sin_addr.s_addr = INADDR_ANY;
-    bind(listenfd, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
-    listen(listenfd, LISTENQ);
-}
+    if(bind(listenfd, (struct sockaddr*)&serveraddr, sizeof(serveraddr)) != 0){
+        LOG_ERROR("error while running bind")
+        return false;
+    };
 
+    if(listen(listenfd, LISTENQ) != 0){
+        LOG_ERROR("error while running listen")
+        return false;
+    };
 
+    return true;
 
-int EpollTcpServer::test1()
-{
-    int server_fd, new_socket, valread;
-    struct sockaddr_in address;
-    int opt = 1;
-    int addrlen = sizeof(address);
-    char buffer[1024] = {0};
-    char *hello = "Hello from server";
-
-    // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-    {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons( 8082 );
-
-    // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address,
-             sizeof(address))<0)
-    {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-    if (listen(server_fd, 3) < 0)
-    {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                             (socklen_t*)&addrlen))<0)
-    {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
-    valread = read( new_socket , buffer, 1024);
-    printf("%s\n",buffer );
-    send(new_socket , hello , strlen(hello) , 0 );
-    printf("Hello message sent\n");
-    return 0;
 }
 
 void EpollTcpServer::initRWThreads() {
@@ -127,7 +93,8 @@ void EpollTcpServer::handleWrite(const epoll_event *event) {
         LOG_ERROR("no data ptr for event")
         return;
     }
-    writeQue.push((EpollTask *)&event->data.fd);
+
+    writeQue.push(make_shared<IntHolder>((event->data.fd)));
 
 }
 
@@ -135,7 +102,7 @@ void EpollTcpServer::handleRead(const epoll_event *event) {
     if (event->data.fd < 0){
         LOG_ERROR("got bad fd")
     } else {
-        readQue.push((EpollTask *)&event->data.fd);
+        readQue.push(make_shared<IntHolder>((event->data.fd)));
     }
 }
 
@@ -214,8 +181,7 @@ void *EpollTcpServer::readTask() {
     int fd;
     while(shouldRun)
     {
-        EpollTask* taskPtr = readQue.pop();
-        fd = taskPtr->data.fd;
+        fd = readQue.pop()->val;
         if(fd < 0){
             LOG_ERROR("got bad fd")
             continue;
@@ -237,10 +203,11 @@ void *EpollTcpServer::readTask() {
 
 
         READ_HEADER:
-        if(recvBuffer->offset < MSG_LEN_BUFF_LEN) {
+        if(recvBuffer->offset < SIMPLE_MSG_LEN_LEN) {
             int ret = readNBytes(fd,
-                                 recvBuffer->msg_len_buff + recvBuffer->offset,
-                                 recvBuffer->offset - MSG_LEN_BUFF_LEN);
+                                 recvBuffer->msg_complete_buff + recvBuffer->offset,
+                                 SIMPLE_MSG_LEN_LEN - recvBuffer->offset);
+
             if (ret == -1){
                 disconnectClient(fd);
                 continue;
@@ -258,8 +225,8 @@ void *EpollTcpServer::readTask() {
 
         if(recvBuffer->offset >= MSG_LEN_BUFF_LEN) {
             int ret = readNBytes(fd,
-                                 recvBuffer->msg_data_buff + recvBuffer->offset,
-                                 recvBuffer->get_msg_all_data_len() - recvBuffer->offset);
+                                 recvBuffer->msg_complete_buff + recvBuffer->offset,
+                                 recvBuffer->get_msg_len() - recvBuffer->offset);
 
             if (ret == -1){
                 disconnectClient(fd);
@@ -276,14 +243,15 @@ void *EpollTcpServer::readTask() {
             }
         }
 
-        if(recvBuffer->offset == recvBuffer->get_msg_all_data_len()) {
-            LOG_INFO("got msg from fd ", fd, " len ", recvBuffer->get_msg_all_data_len())
-            uint32_t numOfChunks = recvBuffer->get_int(SIMPLE_MSG_CHUNK_NUMBER_OF_CHUNCKS_OFFSET);
+        if(recvBuffer->offset == recvBuffer->get_msg_len()) {
+            LOG_INFO("got msg from fd ", fd, " len ", recvBuffer->get_msg_len())
+            uint32_t numOfChunks = recvBuffer->get_int(SIMPLE_MSG_NUMBER_OF_CHUNCKS_OFFSET);
             uint32_t chunkNum = recvBuffer->get_int(SIMPLE_MSG_CHUNK_NUMBER_OFFSET);
             if (numOfChunks > chunkNum){
                 userDataPtr->recvList->append(BufferPool::bufferPool->get());
+                recvBuffer = userDataPtr->recvList->get_tail();
             } else if (numOfChunks == chunkNum) {
-                handleIncomeMsg(userDataPtr->recvList);
+                handleIncomeMsg(userDataPtr->recvList, fd);
                 userDataPtr->recvList = new ThreadSafeBufferList();
             } else if (numOfChunks < chunkNum){
                 LOG_ERROR("numOfChunks < chunkNum ", numOfChunks , " ", chunkNum)
@@ -293,6 +261,7 @@ void *EpollTcpServer::readTask() {
             goto READ_HEADER;
         }
     }
+    return nullptr;
 }
 
 void EpollTcpServer::sendToClient(int fd, ThreadSafeBufferList * list){
@@ -300,7 +269,6 @@ void EpollTcpServer::sendToClient(int fd, ThreadSafeBufferList * list){
 
     if(userDataPtr == nullptr) {
         LOG_ERROR("cant find client for fd", fd)
-        // todo relese
         return;
     }
 
@@ -310,7 +278,7 @@ void EpollTcpServer::sendToClient(int fd, ThreadSafeBufferList * list){
 
 void EpollTcpServer::startSend(int fd) const {
     epoll_event event{0};
-    event.events = EPOLLOUT | EPOLLET;
+    event.events = EPOLLOUT | EPOLLET | EPOLLIN;
     event.data.fd = fd;
     epoll_ctl(ePollFd, EPOLL_CTL_MOD, fd, &event);
 }
@@ -318,11 +286,9 @@ void EpollTcpServer::startSend(int fd) const {
 
 void *EpollTcpServer::writeTask() {
     int fd;
-    ssize_t n;
     while(shouldRun)
     {
-        EpollTask * taskPtr = writeQue.pop();
-        fd = taskPtr->data.fd;
+        fd = writeQue.pop()->val;
         UserData * userDataPtr = userDataMap.getFromMap((uint32_t)fd);
 
         if(userDataPtr == nullptr) {
@@ -338,37 +304,39 @@ void *EpollTcpServer::writeTask() {
             continue;
         }
 
-        uint32_t lenSend = out->get_msg_all_data_len() - out->offset;
-        int ret = writeNBytes(fd, out->msg_len_buff + out->offset, lenSend);
+        uint32_t lenSend = out->get_msg_len() - out->offset;
+        int ret = writeNBytes(fd, out->msg_complete_buff+ out->offset, lenSend);
         if(ret == -1){
-            //todo release all
+            //todo releaseAllChain all
             LOG_ERROR("cant send data to fd ", fd)
             disconnectClient(fd);
             continue;
         } else if (lenSend == ret){
             LOG_INFO("buffer was sent to ", fd)
-            // release buffer
-            BufferPool::bufferPool->releaseOne(userDataPtr->sendListLsits->get_head()->remove_head());
+
             // if next buffer is null
             if (userDataPtr->sendListLsits->get_head()->get_head() == nullptr){
                 // remove list
                 delete(userDataPtr->sendListLsits->remove_head());
                 if (userDataPtr->sendListLsits->get_head() == nullptr){
                     // if next list is null cont to listen
-                    // todo raise
                     startRecv(fd);
                     if (userDataPtr->sendListLsits->get_head() != nullptr){
-                        // raise mgmt
                         startSend(fd);
                     }
                 }
+                else {
+                    startSend(fd);
+                }
+            } else {
+                startSend(fd);
             }
-
         } else {
             out->offset += ret;
+            startSend(fd);
         }
     }
-
+    return nullptr;
 }
 
 void EpollTcpServer::startRecv(int fd) const {
@@ -378,23 +346,42 @@ void EpollTcpServer::startRecv(int fd) const {
     epoll_ctl(ePollFd, EPOLL_CTL_MOD, fd, &event);
 }
 
-void EpollTcpServer::test() {
-    this->listenAddr = "127.0.0.0";
-    this->listenPort = 8082;
-    listenOnEpoll();
+bool EpollTcpServer::run() {
+    if (!listenOnEpoll()){
+        LOG_ERROR("cant listen to epol")
+        return false;
+    }
     initRWThreads();
     runServer();
+    return true;
+}
 
+void EpollTcpServer::init(string &addr, uint16_t port){
+    this->listenAddr = addr;
+    this->listenPort = port;
+}
+
+void EpollTcpServer::handleIncomeMsg(ThreadSafeBufferList * list, uint32_t clientId) {
+    auto to_print = list->get_head();
+    while (to_print != nullptr){
+        to_print->offset = 0;
+        to_print = to_print->nextBuffer;
+    }
+
+    outQue.push(new MsgFromClient(list,clientId));
 
 }
 
-void EpollTcpServer::handleIncomeMsg(ThreadSafeBufferList * list) {
-
+void EpollTcpServer::setShouldRun(bool shouldRun) {
+    this->shouldRun = shouldRun;
 }
 
-void EpollTcpServer::shutdown() {
-    shouldRun = false;
+ MsgFromClient * EpollTcpServer::tryRecieve() {
+    return outQue.try_pop();
+}
 
+MsgFromClient *EpollTcpServer::recieve() {
+    return outQue.pop();
 }
 
 

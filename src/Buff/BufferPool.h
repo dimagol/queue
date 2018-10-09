@@ -2,6 +2,11 @@
 // Created by dima on 13/10/17.
 //
 
+
+
+#ifndef TCP_SHMAFKA_BUFFERPOLL_H
+#define TCP_SHMAFKA_BUFFERPOLL_H
+
 #include <cstdint>
 #include <vector>
 #include <netinet/in.h>
@@ -11,26 +16,24 @@
 #include <iostream>
 #include "SocketProtoBuffer.h"
 
-#ifndef TCP_SHMAFKA_BUFFERPOLL_H
-#define TCP_SHMAFKA_BUFFERPOLL_H
-using namespace std;
 
+using namespace std;
 
 class BufferPool{
 public:
     BufferPool(uint32_t total, uint32_t bufferLen);
 
     SocketProtoBuffer* get();
-    SocketProtoBuffer* getWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len);
+//    SocketProtoBuffer* getWithIntAndData(uint32_t type, const uint8_t *data, uint32_t len);
     SocketProtoBuffer* getWithIntAndStr(uint32_t type, const string &str);
-    SocketProtoBuffer* getWithInt(uint32_t type);
-    void release(SocketProtoBuffer *);
+//    SocketProtoBuffer* getWithInt(uint32_t type);
+    void releaseAllChain(SocketProtoBuffer *);
     void releaseOne(SocketProtoBuffer *buffer);
-    SocketProtoBuffer *getChunkedWithIntAndData(uint32_t type, const uint8_t *str, uint32_t len);
-    SocketProtoBuffer *getChunkedWithIntAndStr(uint32_t type, string &str);
+//    SocketProtoBuffer *getChunkedWithIntAndData(uint32_t type, const uint8_t *str, uint32_t len);
+//    SocketProtoBuffer *getChunkedWithIntAndStr(uint32_t type, string &str);
 
-    SocketProtoBuffer *getChunkedWithIntAndChannelStr(uint32_t type, const string &channel, const string &str);
-    SocketProtoBuffer *getChunkedWithIntAndChannelData(uint32_t type, uint8_t *channel, uint32_t channelLen, uint8_t *data, uint32_t dataLen);
+//    SocketProtoBuffer *getChunkedWithIntAndChannelStr(uint32_t type, const string &channel, const string &str);
+//    SocketProtoBuffer *getChunkedWithIntAndChannelData(uint32_t type, uint8_t *channel, uint32_t channelLen, uint8_t *data, uint32_t dataLen);
     virtual ~BufferPool() {
 
     }
@@ -42,6 +45,8 @@ private:
     vector<SocketProtoBuffer *> bufferVector;
     uint32_t total;
     uint32_t bufferLen;
+public:
+    uint32_t getBufferLen() const;
 
 public:
     int getSize();

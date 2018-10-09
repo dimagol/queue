@@ -3,44 +3,45 @@
 //
 
 #include "Worker.h"
+#include "../Server/Epoll/EpollTcpServer.h"
 
 
 void Worker::run() {
-    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr || msgBuilder == nullptr ){
-        LOG_ERROR("not set");
-        return;
-    }
-    while (shouldRun){
-        auto prodMsg = producerServer->tryRecieve();
-
-        if(prodMsg != nullptr){
-//            prodMsg->releaseBuffer();
-         auto event = processor.getEventByBuff(*prodMsg);
-            if(event.getType() != MsgType::UNDEFINED){
-                handlePostMsg(event);
-            } else {
-                LOG_ERROR("got undefined msg")
-            }
-
-
-        }
-
-        auto consMsg = consumerServer->tryRecieve();
-        if(consMsg != nullptr){
-//            consMsg ->releaseBuffer();
-            auto event = processor.getEventByBuff(*consMsg);
-            if(event.getType() != MsgType::UNDEFINED){
-                handleListenMsg(event);
-            } else {
-                LOG_ERROR("got undefined msg")
-            }
-        }
-
-        if(consMsg == nullptr && prodMsg == nullptr){
-            waitingStrategy->wait();
-        }
-    }
-    LOG_INFO("worker done")
+//    if (channelDb == nullptr || producerServer == nullptr || consumerServer == nullptr || msgBuilder == nullptr ){
+//        LOG_ERROR("not set");
+//        return;
+//    }
+//    while (shouldRun){
+//        auto prodMsg = producerServer->tryRecieve();
+//
+//        if(prodMsg != nullptr){
+////            prodMsg->releaseBuffer();
+//         auto event = processor.getEventByBuff(*prodMsg);
+//            if(event.getType() != MsgType::UNDEFINED){
+//                handlePostMsg(event);
+//            } else {
+//                LOG_ERROR("got undefined msg")
+//            }
+//
+//
+//        }
+//
+//        auto consMsg = consumerServer->tryRecieve();
+//        if(consMsg != nullptr){
+////            consMsg ->releaseBuffer();
+//            auto event = processor.getEventByBuff(*consMsg);
+//            if(event.getType() != MsgType::UNDEFINED){
+//                handleListenMsg(event);
+//            } else {
+//                LOG_ERROR("got undefined msg")
+//            }
+//        }
+//
+//        if(consMsg == nullptr && prodMsg == nullptr){
+//            waitingStrategy->wait();
+//        }
+//    }
+//    LOG_INFO("worker done")
 }
 
 void Worker::handlePostMsg(ProceededEvent &event) const {
@@ -67,7 +68,7 @@ void Worker::handlePostMsg(ProceededEvent &event) const {
         default:
             LOG_ERROR("got unsupported msg of type ",event.getType());
             if(event.getSocketProtoBuffer() != nullptr){
-                BufferPool::bufferPool->release(event.getSocketProtoBuffer());
+                BufferPool::bufferPool->releaseAllChain(event.getSocketProtoBuffer());
             }
     }
 }
@@ -93,7 +94,7 @@ void Worker::handleListenMsg(ProceededEvent &event) const {
         default:
             LOG_ERROR("got unsupported msg of type ",event.getType());
             if(event.getSocketProtoBuffer() != nullptr){
-                BufferPool::bufferPool->release(event.getSocketProtoBuffer());
+                BufferPool::bufferPool->releaseAllChain(event.getSocketProtoBuffer());
             }
     }
 }
@@ -108,22 +109,22 @@ void Worker::handlePostRegister(ProceededEvent &event) const {
 }
 
 void Worker::handlePost(ProceededEvent &event) const {
-    auto channel = channelDb->getChannel(event.getChannelName());
-    if (channel == nullptr) {
-        LOG_ERROR("channel not exist ", event.getChannelName());
-        if(event.getSocketProtoBuffer() != nullptr){
-            BufferPool::bufferPool->release(event.getSocketProtoBuffer());
-        }
-    } else {
-        channel->feed(event);
-        if (channel->haveNewData()) {
-            auto data = channel->getBuffDone();
-            channel->setNoData();
-            auto ptr = make_shared<TcpServerOutcomeMessage>(data->head,
-                                                            channel->getRegisteredUsers());
-            consumerServer->send(ptr);
-        }
-    }
+//    auto channel = channelDb->getChannel(event.getChannelName());
+//    if (channel == nullptr) {
+//        LOG_ERROR("channel not exist ", event.getChannelName());
+//        if(event.getSocketProtoBuffer() != nullptr){
+//            BufferPool::bufferPool->releaseAllChain(event.getSocketProtoBuffer());
+//        }
+//    } else {
+//        channel->feed(event);
+//        if (channel->haveNewData()) {
+//            auto data = channel->getBuffDone();
+//            channel->setNoData();
+//            auto ptr = make_shared<TcpServerOutcomeMessage>(data->head,
+//                                                            channel->getRegisteredUsers());
+//            consumerServer->send(ptr);
+//        }
+//    }
 }
 
 void Worker::handlePostDeregister(ProceededEvent &event) const {
@@ -153,14 +154,14 @@ void Worker::handlePostDisconnect(ProceededEvent &event) const {
 }
 
 void Worker::handlePostListChannels(ProceededEvent &event) const {
-    string channelsStr = this->channelDb->getChannelListStr();
-    auto buff = msgBuilder->buildListenListChannelsResMsg(channelsStr);
-    if (buff != nullptr) {
-        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
-        this->producerServer->send(ptr);
-    } else{
-        LOG_ERROR("got null buff");
-    }
+//    string channelsStr = this->channelDb->getChannelListStr();
+//    auto buff = msgBuilder->buildListenListChannelsResMsg(channelsStr);
+//    if (buff != nullptr) {
+//        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
+//        this->producerServer->send(ptr);
+//    } else{
+//        LOG_ERROR("got null buff");
+//    }
 }
 
 // listen handlers
@@ -198,14 +199,14 @@ void Worker::handleListenDisconnect(ProceededEvent &event) const {
 }
 
 void Worker::handleListenListChannels(ProceededEvent &event) const {
-    string str = this->channelDb->getChannelListStr();
-    auto buff = msgBuilder->buildListenListChannelsResMsg(str);
-    if (buff != nullptr) {
-        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
-        this->consumerServer->send(ptr);
-    } else{
-        LOG_ERROR("got null buff");
-    }
+//    string str = this->channelDb->getChannelListStr();
+//    auto buff = msgBuilder->buildListenListChannelsResMsg(str);
+//    if (buff != nullptr) {
+//        auto ptr = make_shared<TcpServerOutcomeMessage>(buff, event.getSender_id());
+//        this->consumerServer->send(ptr);
+//    } else{
+//        LOG_ERROR("got null buff");
+//    }
 }
 
 // setters
@@ -213,11 +214,11 @@ void Worker::setChannelDb(ChannelDb * channelDb) {
     Worker::channelDb = channelDb;
 }
 
-void Worker::setProducerServer(TcpServer* producerServer) {
+void Worker::setProducerServer(EpollTcpServer* producerServer) {
     Worker::producerServer = producerServer;
 }
 
-void Worker::setConsumerServer(TcpServer* consumerServer) {
+void Worker::setConsumerServer(EpollTcpServer* consumerServer) {
     Worker::consumerServer = consumerServer;
 }
 

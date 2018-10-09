@@ -61,10 +61,13 @@ public:
     }
 
     virtual ~ListOfBufferLists() {
+        auto buf = head;
+        while (head != nullptr){
+            delete head;
+        }
     }
 
 private:
-
     BuffersList * head;
     BuffersList * tail;
     uint32_t len;

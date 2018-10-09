@@ -10,9 +10,7 @@
 
 class ThreadSafeListOfBuffersLists : public ListOfBufferLists {
 public:
-    ThreadSafeListOfBuffersLists() : ListOfBufferLists() {
-
-    }
+    ThreadSafeListOfBuffersLists() = default;
 
     explicit ThreadSafeListOfBuffersLists(BuffersList *buffersList) : ListOfBufferLists(buffersList) {
 
@@ -43,9 +41,6 @@ public:
         return ListOfBufferLists::get_len();
     }
 
-    ~ThreadSafeListOfBuffersLists() {
-
-    }
 
 private:
     std::mutex rwMutex{};

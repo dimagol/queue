@@ -1,7 +1,8 @@
 //
-// Created by dima on 14/12/17.
-//
 
+// Created by dima on 14/12/17.
+
+//
 #ifndef TCP_SHMAFKA_SOCKETPROTOBUFFER_H
 #define TCP_SHMAFKA_SOCKETPROTOBUFFER_H
 #include <cstdint>
@@ -19,22 +20,18 @@ public:
     explicit SocketProtoBuffer(uint32_t len) :
             len(len),
             nextBuffer(nullptr),
-            sendingRefCount(0),
-            msg_complete_buff(new uint8_t[len + MSG_LEN_BUFF_LEN]),
-            msg_len_buff(msg_complete_buff),
-            msg_data_buff(msg_complete_buff + MSG_LEN_BUFF_LEN),
-            wasCopiedOrMoved(false),offset(0),lastBuff(nullptr){}
+            msg_complete_buff(new uint8_t[len]),
+            wasCopiedOrMoved(false),
+            offset(0){}
 
     // copy constructor
     SocketProtoBuffer (SocketProtoBuffer &obj):
             len(obj.len),
             nextBuffer(obj.nextBuffer),
-            sendingRefCount(obj.sendingRefCount),
             msg_complete_buff(obj.msg_complete_buff),
-            msg_len_buff(obj.msg_len_buff),
-            msg_data_buff(obj.msg_data_buff),
             wasCopiedOrMoved(false),
-            offset(obj.offset){
+            offset(obj.offset)
+    {
         obj.wasCopiedOrMoved = true;
     }
 
@@ -43,10 +40,7 @@ public:
     SocketProtoBuffer (SocketProtoBuffer &&obj) noexcept:
             len(obj.len),
             nextBuffer(obj.nextBuffer),
-            sendingRefCount(obj.sendingRefCount),
             msg_complete_buff(obj.msg_complete_buff),
-            msg_len_buff(obj.msg_len_buff),
-            msg_data_buff(obj.msg_data_buff),
             wasCopiedOrMoved(false),
             offset(obj.offset){
         obj.wasCopiedOrMoved = true;
@@ -58,62 +52,46 @@ public:
 
     inline uint32_t get_msg_len() const ;
 
-    inline uint32_t get_msg_all_data_len();
+    inline void set_data(uint8_t* data, uint32_t offset, uint32_t len);
 
     inline void set_msg_len(uint32_t len);
 
-    inline void set_data(const uint8_t * data, uint32_t len);
-
-    inline void append_data(const uint8_t * data, uint32_t data_len, uint32_t offset);
-
     inline void set_int(uint32_t data, uint32_t offset);
 
-    inline void append_int(uint32_t data, uint32_t offset);
-
     inline void reset();
-
-    inline void decRef();
-
-    inline bool isZeroRef();
-
-    inline void setRefCountList(uint32_t refCount);
 
     inline void print_hex_memory() const ;
 
     inline virtual ~SocketProtoBuffer(){
         if(!wasCopiedOrMoved){
-            delete(msg_data_buff);
+            delete(msg_complete_buff);
         }
     }
 
     uint8_t * const msg_complete_buff;
-    uint8_t * const msg_len_buff;
-    uint8_t * const msg_data_buff;
 
     uint32_t offset;
 
 
     SocketProtoBuffer * nextBuffer;
-    SocketProtoBuffer * lastBuff;
+    SocketProtoBuffer * lastBuff{};
 
     bool wasCopiedOrMoved;
     const uint32_t len;
-    private:
-    uint32_t sendingRefCount;
 
 };
 
 const string SocketProtoBuffer::get_string(uint32_t offset) const {
-    return string((char *)msg_len_buff + offset);
+    return string((char *)msg_complete_buff + offset);
 }
 
 const uint32_t SocketProtoBuffer::get_int(uint32_t offset) const {
-    return ntohl(*((uint32_t * )(msg_len_buff + offset)));
+    return ntohl(*((uint32_t * )(msg_complete_buff + offset)));
 }
 
 void SocketProtoBuffer::print_hex_memory() const {
 
-    int all_msg_len = get_msg_len() + 4;
+    int all_msg_len = get_msg_len();
     if (all_msg_len > len)
     {
         all_msg_len=len;
@@ -178,57 +156,30 @@ void SocketProtoBuffer::print_hex_memory() const {
 }
 
 uint32_t SocketProtoBuffer::get_msg_len() const{
-    return ntohl(*((uint32_t * )msg_len_buff));
-}
-
-uint32_t SocketProtoBuffer::get_msg_all_data_len() {
-    return ntohl(*((uint32_t * )msg_len_buff)) + MSG_LEN_BUFF_LEN;
+    return ntohl(*((uint32_t * )msg_complete_buff));
 }
 
 void SocketProtoBuffer::set_msg_len(uint32_t len) {
-    *((uint32_t *)msg_len_buff) = htonl(len);
+    *((uint32_t *)msg_complete_buff) = htonl(len);
 }
 
-void SocketProtoBuffer::set_data(const uint8_t *data, uint32_t len) {
-    memcpy(msg_data_buff, data, len);
-    *((uint32_t *)msg_len_buff) = htonl(len);
-}
-
-void SocketProtoBuffer::append_data(const uint8_t *data, uint32_t data_len, uint32_t offset) {
-    memcpy(msg_data_buff + offset, data, data_len);
-    *((uint32_t *)msg_len_buff) = htonl(offset + data_len);
-}
 
 void SocketProtoBuffer::set_int(uint32_t data, uint32_t offset) {
     data = htonl(data);
-    memcpy(msg_data_buff + offset, (uint8_t *)(&data), 4);
+    memcpy(msg_complete_buff + offset, (uint8_t *)(&data), 4);
 }
 
-void SocketProtoBuffer::append_int(uint32_t data, uint32_t offset) {
-    data = htonl(data);
-    memcpy(msg_data_buff + offset, (uint8_t *)(&data), 4);
-    *((uint32_t *)msg_len_buff) = htonl(offset + 4);
+void SocketProtoBuffer::set_data(uint8_t *data, uint32_t offset, uint32_t len) {
+    memcpy(msg_complete_buff + offset, data, len);
 }
 
 void SocketProtoBuffer::reset() {
-    sendingRefCount = 0;
     nextBuffer = nullptr;
+    offset = 0;
 
 }
 
-void SocketProtoBuffer::decRef() {
-    sendingRefCount--;
-}
 
-bool SocketProtoBuffer::isZeroRef() {
-    return sendingRefCount == 0;
-}
-
-void SocketProtoBuffer::setRefCountList(uint32_t refCount) {
-    for (auto buff = this ; buff != nullptr; buff=buff->nextBuffer){
-        buff->sendingRefCount = refCount;
-    }
-}
 
 
 

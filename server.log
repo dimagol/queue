@@ -1,0 +1,14 @@
+INFO 08-10-2018 08:41:52 WorkerThread.h:17 [140737353832256] - worker init
+INFO 08-10-2018 08:41:52 ServerThread.h:17 [140737353832256] - ServerThread initiate
+INFO 08-10-2018 08:41:52 ServerThread.h:17 [140737353832256] - ServerThread initiate
+INFO 08-10-2018 08:41:52 ServerThread.h:23 [140737353832256] - ServerThread run
+INFO 08-10-2018 08:41:52 ServerThread.h:23 [140737353832256] - ServerThread run
+INFO 08-10-2018 08:41:52 WorkerThread.h:22 [140737353832256] - worker run
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:125 [140737319024384] - new client added 9
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:145 [140737219917568] - read 4 data fd9
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:145 [140737219917568] - read 1020 data fd9
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:247 [140737219917568] - got msg from fd 9 len 1024
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:145 [140737219917568] - read 4 data fd9
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:145 [140737219917568] - read 496 data fd9
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:247 [140737219917568] - got msg from fd 9 len 500
+INFO 08-10-2018 08:41:57 EpollTcpServer.cpp:138 [140737219917568] - done reading fd 9

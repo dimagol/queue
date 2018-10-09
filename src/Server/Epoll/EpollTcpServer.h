@@ -8,20 +8,26 @@
 #include "../../Logging/TSLogger.h"
 #include "../../Buff/ThreadSafeBufferList.h"
 #include "ThreadSafeUserDataMap.h"
+#include "UserData.h"
+#include "../../Queue/ConcurrentQueueSingleConsumer.h"
+#include "MsgFromClient.h"
 
 #define LISTENQ     20
 #define TIMEOUT     500
 
+#ifndef EPOL_TCP_SERVER_H
+#define EPOL_TCP_SERVER_H
+
 class EpollTcpServer{
 
-    class EpollTask {
+    class IntHolder{
     public:
-        explicit EpollTask(epoll_data_t data){
-            this->data = data;
-        }
-        epoll_data_t data{0};
+        explicit IntHolder(int val) : val(val) {}
+        int val;
     };
 
+
+private:
     ThreadSafeUserDataMap userDataMap;
 
     int ePollFd;
@@ -29,13 +35,13 @@ class EpollTcpServer{
     epoll_event events[LISTENQ];
     int listenfd;
     volatile bool shouldRun = true;
-    ConcurrentQueue<EpollTask*> readQue;
-    ConcurrentQueue<EpollTask*> writeQue;
+    ConcurrentQueue<shared_ptr<IntHolder>> readQue;
+    ConcurrentQueue<shared_ptr<IntHolder>> writeQue;
+    ConcurrentQueue<MsgFromClient *> outQue;
     uint16_t listenPort;
     std::string listenAddr;
     std::thread *writeTaskThread;
     std::thread *readTaskThread;
-
 
 
     void handleRead(const epoll_event *event);
@@ -44,38 +50,45 @@ class EpollTcpServer{
 
     void initRWThreads();
 
-    void listenOnEpoll();
+    bool listenOnEpoll();
 
     void * readTask();
 
     void * writeTask();
 
-    void setNonBlocking(int sock);
+    bool setNonBlocking(int sock);
 
-    int runServer();
+    bool runServer();
 
     void acceptClient(const epoll_event *event);
 
-    void handleIncomeMsg(ThreadSafeBufferList * list);
-
-public:
-    void test();
-
-    int test1();
-
-    void shutdown();
-
-    int readNBytes(int fd, uint8_t *buffer, uint32_t len);
-
-    void disconnectClient(int fd);
-
-    int writeNBytes(int fd, uint8_t *buffer, uint32_t len);
-
-    void sendToClient(int fd, ThreadSafeBufferList * list);
+    void handleIncomeMsg(ThreadSafeBufferList * list, uint32_t clientId);
 
     void startRecv(int fd) const;
 
     void startSend(int fd) const;
+
+    int readNBytes(int fd, uint8_t *buffer, uint32_t len);
+
+    int writeNBytes(int fd, uint8_t *buffer, uint32_t len);
+
+public:
+
+    void setShouldRun(bool shouldRun);
+
+    bool run();
+
+    void disconnectClient(int fd);
+
+    void sendToClient(int fd, ThreadSafeBufferList * list);
+
+    void init(string &addr, uint16_t port);
+
+    MsgFromClient * tryRecieve();
+
+    MsgFromClient * recieve();
+
 };
 
 
+#endif

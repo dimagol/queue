@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 
-find_package(Boost 1.58.0 COMPONENTS filesystem system REQUIRED)
+find_package(Boost 1.65.1 COMPONENTS filesystem system REQUIRED)
 
 if(Boost_FOUND)
     message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
@@ -18,10 +18,6 @@ if(Boost_FOUND)
 endif()
 
 set(SOURCE_FILES src/main.cpp
-        src/Server/TcpServer.h
-        src/Server/TcpServer.cpp
-        src/DefinedMessages.cpp
-        src/DefinedMessages.h
         src/Buff/BufferPool.h
         src/Buff/BufferPool.cpp
         src/Queue/ConcurrentQueue.h
@@ -33,23 +29,16 @@ set(SOURCE_FILES src/main.cpp
         src/Configuration/Config.cpp
         src/Configuration/GlobalConfig.cpp
         src/Configuration/GlobalConfig.h
-        src/Server/TcpServerConnection.cpp
-        src/Server/TcpServerConnection.h
-        src/Client/Client.cpp
-        src/Client/Client.h
-        src/Logging/TSLogger.h
         src/Processor/MsgToEventProcessor.cpp
         src/Processor/MsgToEventProcessor.h
         src/Processor/ProceededEvent.cpp
         src/Processor/ProceededEvent.h
-        src/Server/TcpServerIncomeMessage.h
         src/Msg/MsgType.h
         src/Msg/MsgConsts.h
         src/ChanelDb/ChannelDb.cpp
         src/ChanelDb/ChannelDb.h
         src/ChanelDb/Channel.cpp
         src/ChanelDb/Channel.h
-        src/Server/TcpServerOutcomeMessage.h
         src/Threads/ServerThread.cpp
         src/Threads/ServerThread.h
         src/Worker/Worker.cpp
@@ -61,7 +50,6 @@ set(SOURCE_FILES src/main.cpp
         src/Chain/Chain.h
         src/Msg/MsgBuilder.cpp
         src/Msg/MsgBuilder.h
-        src/Logging/TSLogger.cpp
         src/ArgsParser.cpp
         src/ArgsParser.h
         src/Queue/IConcurrentQueue.h
@@ -72,7 +60,17 @@ set(SOURCE_FILES src/main.cpp
         src/Queue/AsyncLimitedQueue.h
         src/Server/Epoll/EpollTcpServer.cpp
         src/Server/Epoll/EpollTcpServer.h
-        src/Server/Epoll/IServer.h src/Server/Epoll/Client.h src/Buff/BuffersList.h src/Buff/ThreadSafeBufferList.h src/Server/Epoll/ThreadSafeUserDataMap.h src/Server/Epoll/UserData.h src/Server/Epoll/SimpleMsgHeader.h src/Buff/ListOfBufferLists.h src/Buff/ThreadSafeListOfBuffersLists.h)
+        src/Buff/BuffersList.h
+        src/Buff/ThreadSafeBufferList.h
+        src/Server/Epoll/ThreadSafeUserDataMap.h
+        src/Server/Epoll/UserData.h
+        src/Server/Epoll/SimpleMsgHeader.h
+        src/Buff/ListOfBufferLists.h
+        src/Buff/ThreadSafeListOfBuffersLists.h
+        src/Logging/TSLogger.h
+        src/Logging/TSLogger.cpp
+        src/Server/Epoll/SimpleMsgListBuilder.cpp
+        src/Server/Epoll/SimpleMsgListBuilder.h src/Test/Client.h src/Server/Epoll/MsgFromClient.h src/Server/Epoll/MsgToClients.cpp src/Server/Epoll/MsgToClients.cpp src/Server/Epoll/MsgToClients.h)
 
 if(Boost_FOUND)
     include_directories(

@@ -7,20 +7,21 @@
 
 #include <thread>
 #include <boost/asio/io_service.hpp>
-#include "../Server/TcpServer.h"
 #include "../Logging/TSLogger.h"
+#include "../Server/Epoll/EpollTcpServer.h"
 
 using namespace std;
 class ServerThread {
 public:
-    void init(TcpServer *server_ptr){
+    void init(EpollTcpServer *server_ptr){
         LOG_INFO("ServerThread initiate")
         server = server_ptr;
+
     }
 
     void run(){
         LOG_INFO("ServerThread run")
-        serverThread = new thread(&TcpServer::run, server);
+        serverThread = new thread(&EpollTcpServer::run, server);
     }
 
     void join(){
@@ -35,7 +36,7 @@ public:
 
 
 private:
-    TcpServer *server = nullptr;
+    EpollTcpServer *server = nullptr;
     std::thread *serverThread = nullptr;
 };
 

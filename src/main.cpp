@@ -1,221 +1,144 @@
 #include <iostream>
-#include "Server/TcpServer.h"
-#include "Client/Client.h"
 #include "Logging/TSLogger.h"
 #include "Chain/Chain.h"
 #include "ArgsParser.h"
-#include "Queue/ConcurrentQueueSingleConsumer.h"
-#include "Server/Epoll/EpollTcpServer.h"
-
-//int run(int argc, char *const *argv);
-
-//#include <ArgsParser.h>
-//
-//class CliArgParser{
-//
-//public:
-//    enum CliArgResType{UNDEFINED, SERVER, PRODUCES, CONSUMER};
-//
-//    struct CliArgRes{
-//    public:
-//        CliArgResType type = UNDEFINED;
-//        uint16_t serverConsPort = 0;
-//        uint16_t serverProdPort = 0;
-//        string host = "";
-//
-//    };
-//
-//
-//    bool parseArgs(int argc, char *argv[]){
-//        vector<string> cliArgsStrings;
-//        for (int i = 0; i < argc; i++){
-//            cliArgsStrings.emplace_back(argv[i]);
-//        }
-//
-//        if( cliArgsStrings.size() < 2){
-//            cerr << "bad option number" << endl;
-//            return false;
-//        }
-//
-//        if(cliArgsStrings[1] == "--server" || cliArgsStrings[1] == "-s"){
-//            cliArgRes.type = SERVER;
-//            for (int i = 2 ; i < cliArgsStrings.size() ; i++){
-//                if(cliArgsStrings[i] == "--in-port" || cliArgsStrings[i] == "-i" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.serverProdPort = strToPort(cliArgsStrings[i]);
-//                        if (cliArgRes.serverProdPort == 0 ){
-//                            return false;
-//                        }
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//                else if(cliArgsStrings[i] == "--out-port" || cliArgsStrings[i] == "-o" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.serverConsPort= strToPort(cliArgsStrings[i]);
-//                        if (cliArgRes.serverConsPort == 0 ){
-//                            return false;
-//                        }
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//
-//                else if(cliArgsStrings[i] == "--host" || cliArgsStrings[i] == "-h" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.host = cliArgsStrings[i];
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//            }
-//            return true;
-//        }else if(cliArgsStrings[1] == "--producer" || cliArgsStrings[1] == "-p"){
-//            cliArgRes.type = PRODUCES;
-//            for (int i = 2 ; i < cliArgsStrings.size() ; i++){
-//                if(cliArgsStrings[i] == "--server-port" || cliArgsStrings[i] == "-s" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.serverProdPort = strToPort(cliArgsStrings[i]);
-//                        if (cliArgRes.serverProdPort == 0 ){
-//                            return false;
-//                        }
-//                    } else {
-//                        return false;
-//                    }
-//                }else if(cliArgsStrings[i] == "--host" || cliArgsStrings[i] == "-h" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.host = cliArgsStrings[i];
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//            }
-//            return true;
-//        }else if(cliArgsStrings[1] == "--consumer" || cliArgsStrings[1] == "-c"){
-//            cliArgRes.type = CONSUMER;
-//            for (int i = 2 ; i < cliArgsStrings.size() ; i++){
-//                if(cliArgsStrings[i] == "--server-port" || cliArgsStrings[i] == "-s" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.serverConsPort = strToPort(cliArgsStrings[i]);
-//                        if (cliArgRes.serverConsPort== 0 ){
-//                            return false;
-//                        }
-//                    } else {
-//                        return false;
-//                    }
-//                }else if(cliArgsStrings[i] == "--host" || cliArgsStrings[i] == "-h" ){
-//                    if(i<cliArgsStrings.size()){
-//                        i++;
-//                        cliArgRes.host = cliArgsStrings[i];
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//            }
-//            return true;
-//        } else{
-//            return false;
-//        }
-//    }
-//
-//    CliArgRes &getCliArgRes(){
-//        return cliArgRes;
-//    }
-//private:
-//    uint16_t strToPort(const string &str){
-//        try {
-//            int p = stoi(str);
-//            if(p < 1024 || p > 0x0FFFF){
-//                return 0;
-//            }
-//            return (uint16_t)p;
-//
-//        }catch (std::exception& e){
-//            return 0;
-//        }
-//
-//
-//    }
-//
-//private:
-//    CliArgRes cliArgRes;
-//
-//
-//};
-//
-
+#include "Server/Epoll/SimpleMsgListBuilder.h"
+#include "Test/Client.h"
 
 
 void runProducer(string &serverHost,uint16_t producerPort) {
-    TSLogger::globalLogger->init("producer.log", true, TSLogger::TRACE);
-    MsgBuilder builder(BufferPool::bufferPool);
-    boost::asio::io_service io_service;
-    Client client(io_service, serverHost, producerPort, SLEEP);
-    thread pClient(boost::bind(&Client::run, &client));
-    usleep(1000000000);
-//    exit(0);
-    client.send(builder.buildPostRegistrationMsg("222222"));
-    client.send(builder.buildPostRegistrationMsg("111111"));
-    int z = 3500000;
-    stringstream ss("");
-    for (int i = 0; i < 20; i++) {
-        ss << "hahahah sent ";
+
+
+    tcp_client c;
+
+
+    //connect to host
+    c.conn(serverHost , producerPort);
+
+    //send some data
+        string s = "";
+    for (int i =0; i < 1500 ; i++){
+        s += "s";
     }
-    for (int i = 0; i < 20; i++) {
-        ss << "ssasa sent ";
-    }
+    SimpleMsgListBuilder simpleMsgListBuilder;
+    const char * data = s.c_str();
+    auto  l = simpleMsgListBuilder.buildFromBuff((uint8_t *)data, strlen(data));
+//    l->get_head()->print_hex_memory();
+//    l->get_head()->nextBuffer->print_hex_memory();
 
-    auto buff = builder.buildPostPostChannelsResMsg("222222", ss.str());
-    while (z > 0 ) {
-        z--;
-//        cout << z <<endl;
+    uint8_t * toSend = new uint8_t(2048);
+    memcpy(toSend , l->get_head()->msg_complete_buff, l->get_head()->get_msg_len());
+    memcpy(toSend + l->get_head()->get_msg_len(), l->get_head()->nextBuffer->msg_complete_buff,l->get_head()->nextBuffer->get_msg_len());
+    c.send_data(toSend,l->get_head()->get_msg_len() + l->get_head()->nextBuffer->get_msg_len());
+//    c.send_data(l->get_head()->msg_complete_buff,l->get_head()->get_msg_len());
+//    c.send_data(l->get_head()->nextBuffer->msg_complete_buff,l->get_head()->nextBuffer->get_msg_len());
 
-        if (buff == nullptr){
-//            LOG_ERROR("no buffers client");
-            usleep(10);
-        } else{
-            client.send(buff);
-        }
+    //receive and echo reply
+    cout<<"----------------------------\n\n";
+    c.receive(1024);
+    cout<<"\n\n----------------------------\n\n";
 
-//        cout << "end\n";
-        for (int i = 0; i < 5; i++) {
 
-//        usleep(1000*5);
-        }
+    //receive and echo reply
+    cout<<"----------------------------\n\n";
+    c.receive(1024);
+    cout<<"\n\n----------------------------\n\n";
 
-//        client.recieve()->print_hex_memory();
-    }
-    pClient.join();
+
+    //receive and echo reply
+    cout<<"----------------------------\n\n";
+    c.receive(1024);
+    cout<<"\n\n----------------------------\n\n";
+
+
+
+    //receive and echo reply
+    cout<<"----------------------------\n\n";
+    c.receive(1024);
+    cout<<"\n\n----------------------------\n\n";
+
+
+    //receive and echo reply
+    cout<<"----------------------------\n\n";
+    c.receive(1024);
+    cout<<"\n\n----------------------------\n\n";
+
+
+//    TSLogger::globalLogger->init("producer.log", true, TSLogger::TRACE);
+//    MsgBuilder builder(BufferPool::bufferPool);
+//    boost::asio::io_service io_service;
+//    Client client(io_service, serverHost, producerPort, SLEEP);
+//    thread pClient(boost::bind(&Client::run, &client));
+////    usleep(1000000000);
+////    exit(0);
+//    client.send(builder.buildPostRegistrationMsg("222222"));
+//    client.send(builder.buildPostRegistrationMsg("111111"));
+//    int z = 3500000;
+//    stringstream ss("");
+//    for (int i = 0; i < 20; i++) {
+//        ss << "hahahah sent ";
+//    }
+//    for (int i = 0; i < 20; i++) {
+//        ss << "ssasa sent ";
+//    }
+//
+//    auto buff = builder.buildPostPostChannelsResMsg("222222", ss.str());
+//    while (z > 0 ) {
+//        z--;
+////        cout << z <<endl;
+//
+//        if (buff == nullptr){
+////            LOG_ERROR("no buffers client");
+//            usleep(10);
+//        } else{
+//            client.send(buff);
+//        }
+//
+////        cout << "end\n";
+//        for (int i = 0; i < 5; i++) {
+//
+////        usleep(1000*5);
+//        }
+//
+////        client.recieve()->print_hex_memory();
+//    }
+//    pClient.join();
 }
 //
 void runConsumer(string &serverHost,uint16_t consumerPort) {
-    TSLogger::globalLogger->init("consumer.log", true, TSLogger::TRACE);
-    MsgBuilder builder(BufferPool::bufferPool);
-    boost::asio::io_service io_service;
-    Client client(io_service, serverHost, consumerPort, SLEEP);
-    thread pClient(boost::bind(&Client::run, &client));
-    client.send(builder.buildListenRegistrationMsg("111111"));
-    client.send(builder.buildListenRegistrationMsg("222222"));
-    for (int i = 0; i < 1000000 ; i++) {
-        auto msg = client.recieve();
-        cout << i << endl;
-        msg->print_hex_memory();
-        BufferPool::bufferPool->release(msg);
-    }
-    pClient.join();
+//    TSLogger::globalLogger->init("consumer.log", true, TSLogger::TRACE);
+//    MsgBuilder builder(BufferPool::bufferPool);
+//    boost::asio::io_service io_service;
+//    Client client(io_service, serverHost, consumerPort, SLEEP);
+//    thread pClient(boost::bind(&Client::run, &client));
+//    client.send(builder.buildListenRegistrationMsg("111111"));
+//    client.send(builder.buildListenRegistrationMsg("222222"));
+//    for (int i = 0; i < 1000000 ; i++) {
+//        auto msg = client.recieve();
+//        cout << i << endl;
+//        msg->print_hex_memory();
+//        BufferPool::bufferPool->releaseAllChain(msg);
+//    }
+//    pClient.join();
 }
 
-void runServer(uint16_t consumerPort, uint16_t producerPort) {
+void runServer(uint16_t consumerPort, uint16_t producerPort, string &lAdrr) {
+
+
+//    string s = "";
+//    for (int i =0; i < 1013 ; i++){
+//        s += "s";
+//    }
+//    const char * data = s.c_str();
+//    auto  l = simpleMsgListBuilder.buildFromBuff((uint8_t *)data, strlen(data));
+//    l->get_head()->print_hex_memory();
+//    l->get_head()->nextBuffer->print_hex_memory();
     TSLogger::globalLogger->init("server.log", true, TSLogger::TRACE);
     MsgBuilder builder(BufferPool::bufferPool);
-    Chain chain(consumerPort, producerPort, &builder, 1024, SLEEP);
+    Chain chain(consumerPort, producerPort, &builder, 1024, SLEEP, lAdrr);
     chain.runThreads();
+    auto data = chain.getProducerTcpServer().recieve();
+    data->getBufferList()->get_head()->print_hex_memory();
     chain.join();
 }
 
@@ -236,7 +159,7 @@ int run(int argc, char *argv[]) {
     uint16_t consumerPort = argParser.getResults()["cons-port"].value.uint16_val;
 
     if(type == "server"){
-        runServer(consumerPort, producerPort);
+        runServer(consumerPort, producerPort, serverHost);
     } else if (type == "producer"){
         runProducer(serverHost, producerPort);
     } else if (type == "consumer"){
@@ -244,79 +167,10 @@ int run(int argc, char *argv[]) {
     }
     return 0;
 }
-//int z = 9;
-//class S{
-//public:
-//    explicit S(const string &g) : g(g) {
-//        kaka = new char[50];
-//        strcpy(kaka,(char *)g.c_str());
-//    }
-//    virtual ~S() {
-//        cout << this << "   kkkk  "  << g << "  "<< kaka << endl;
-//    }
-//    S( S &obj){
-//        kaka = obj.kaka;
-//        cout << "cc22cc" << endl;
-//    }
-//
-//    S(S&& other){
-//        z=6;
-//    }
-//    S& operator=(S&& other){
-//        z=2;
-//    }
-//
-//
-//
-//    char *kaka{};
-//    string g;
-//};
-//
-//
-//
-//void func( S &&s){
-//    cout << "sss" << s.kaka;
-//}
+
 int main(int argc, char *argv[]) {
     TSLogger::globalLogger->init("consumer.log", true, TSLogger::TRACE);
-    EpollTcpServer tcpServer;
-    tcpServer.test();
-
-
-
-//    shared_ptr<S> ptr2;
-//    S s("xxx");
-//
-//    IConcurrentQueue<shared_ptr<S>> * queue1 = new ConcurrentQueueSingleConsumer<shared_ptr<S>>(10,SLEEP);
-////    S &&k = ;
-//    {
-//        vector<S> vector1;
-//        char *data = (char *) "ssssss";
-//
-//        vector1.push_back(std::move(s));
-//
-//        shared_ptr<S> ptr = make_shared<S>(s);
-////    shared_ptr<S> ptr2 = std::move;
-//        func(std::move(s));
-////        S &&k = std::move(s);
-//    }
-//    cout << z << endl;
-////    queue1->push(make_shared<S>(s));
-//
-//
-//
-//
-////
-////    queue1->push(ptr);
-////    char * z = * (queue1->pop().get());
-////    cout << z << endl;
-////    auto zz = (queue1->try_pop());
-////    if(zz == nullptr){
-////        cout << "ddd" ;
-////    }
-////    cout << (uint64_t)z << endl;
-   return run(argc, argv);
-
+    return run(argc, argv);
 }
 
 
